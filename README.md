@@ -1,66 +1,56 @@
 # Free Win Client
 
-Astro, Svelte, and Tailwind client for the Free Win community card-order workflow.
+Cliente comunitario para coordinar Pedidos de cartas Yu-Gi-Oh!. Está construido con
+Astro, Svelte y Tailwind, y consume el backend de Free Win.
 
-## Setup
+## Configuración local
 
-1. Copy `.env.example` to `.env` and adjust `PUBLIC_FREE_WIN_API_URL` if needed.
-2. Install dependencies with `pnpm install`.
-3. Start the development server with `astro dev --background`.
+Requisitos: Node.js 22.12 o posterior, pnpm y el backend local disponible.
 
-The local backend defaults to `http://127.0.0.1:8000`; its contract is available at
-`/openapi.json`.
+1. Copia `.env.example` como `.env` si necesitas cambiar la URL del backend.
+2. Instala las dependencias con `pnpm install`.
+3. Inicia el backend en `http://127.0.0.1:8000`.
+4. Inicia el cliente con `astro dev --background`.
 
-## Project structure
+El cliente usa `PUBLIC_FREE_WIN_API_URL=http://127.0.0.1:8000` de forma
+predeterminada.
 
-- `src/config/`: runtime configuration.
-- `src/lib/api/`: typed API client and transport-level models.
-- `src/components/`: reusable Astro and Svelte components.
-- `src/pages/`: route entry points.
-- `src/styles/`: global Tailwind styles.
+## Comandos
 
----
+| Comando | Propósito |
+| --- | --- |
+| `pnpm dev` | Inicia Astro en primer plano. Para trabajo automatizado usa `astro dev --background`. |
+| `pnpm api:generate` | Regenera todos los tipos desde el OpenAPI local. |
+| `pnpm check` | Valida TypeScript, Astro y Svelte. |
+| `pnpm test` | Ejecuta las pruebas unitarias con Vitest. |
+| `pnpm build` | Genera el servidor independiente de producción. |
+| `pnpm start` | Ejecuta el servidor generado después de `pnpm build`. |
 
-# Astro Starter Kit: Minimal
+La generación OpenAPI requiere el backend, pero `check`, `test` y `build` usan el
+contrato ya guardado y funcionan sin conectarse a él.
 
-```sh
-pnpm create astro@latest -- --template minimal
-```
+## Rutas de la primera fase
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Las URL y los identificadores técnicos están en inglés; todo el texto enfocado en el
+usuario está en español.
 
-## 🚀 Project Structure
+- `/`: resumen del flujo.
+- `/order-periods` y `/order-periods/:id`: Pedidos y composición de una orden.
+- `/orders` y `/orders/:id`: seguimiento y edición permitida de órdenes propias.
+- `/admin/order-periods`: creación y administración de Pedidos.
+- `/admin/orders` y `/admin/orders/:id`: revisión de cantidades y precios.
 
-Inside of your Astro project, you'll see the following folders and files:
+La autenticación todavía depende de la identidad temporal configurada por el
+backend. Esta fase no agrega un flujo falso de inicio de sesión.
 
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
-```
+## Arquitectura
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+- `src/lib/api/generated.ts`: contrato completo generado; no editar manualmente.
+- `src/lib/api/workflow.ts`: wrappers escritos a mano para Pedidos, órdenes y
+  publicaciones de cartas.
+- `src/components/workflow/`: islas Svelte con los flujos interactivos.
+- `src/pages/`: páginas Astro y rutas en inglés.
+- `src/styles/global.css`: base visual y patrones semánticos de Tailwind.
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
-
-Any static assets, like images, can be placed in the `public/` directory.
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `pnpm install`             | Installs dependencies                            |
-| `pnpm dev`             | Starts local dev server at `localhost:4321`      |
-| `pnpm build`           | Build your production site to `./dist/`          |
-| `pnpm preview`         | Preview your build locally, before deploying     |
-| `pnpm astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `pnpm astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+El backend conserva la autoridad sobre estados, transiciones, snapshots de cartas,
+precios finales y totales.

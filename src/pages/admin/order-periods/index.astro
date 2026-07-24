@@ -1,0 +1,22 @@
+---
+import AppShell from '../../../components/layout/AppShell.astro';
+import PeriodList from '../../../components/workflow/PeriodList.svelte';
+import '../../../styles/global.css';
+---
+
+<AppShell title="Administrar Pedidos | Free Win">
+	<header class="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+		<div>
+			<p class="text-sm font-semibold uppercase tracking-widest text-amber-400">Organización</p>
+			<h1 class="page-heading mt-2">Administrar Pedidos</h1>
+			<p class="page-intro">Crea y actualiza las ventanas de compra de la comunidad.</p>
+		</div>
+		<a class="button shrink-0" href="/admin/order-periods/new">Crear Pedido</a>
+	</header>
+	<nav class="mb-6 flex gap-2 text-sm" aria-label="Administración">
+		<a class="button-secondary" href="/admin/order-periods">Pedidos</a>
+		<a class="button-secondary" href="/admin/orders">Órdenes</a>
+	</nav>
+	<PeriodList client:load admin />
+</AppShell>
+

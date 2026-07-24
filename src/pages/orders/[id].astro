@@ -1,0 +1,13 @@
+---
+import AppShell from '../../components/layout/AppShell.astro';
+import OrderDetail from '../../components/workflow/OrderDetail.svelte';
+import '../../styles/global.css';
+
+const id = Number(Astro.params.id);
+if (!Number.isInteger(id) || id <= 0) return Astro.redirect('/orders');
+---
+
+<AppShell title={`Orden #${id} | Free Win`}>
+	<OrderDetail client:load id={id} />
+</AppShell>
+

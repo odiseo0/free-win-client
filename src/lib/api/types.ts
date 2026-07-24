@@ -1,67 +1,21 @@
-/** Types mirror the Free Win OpenAPI contract; UI state belongs outside this file. */
-export interface PaginatedResponse<T> {
-	items: T[];
-	total: number;
-}
+import type { components } from './generated';
 
-export type OrderPeriodStatus = 'draft' | 'open' | 'closed';
-export type OrderRequestStatus =
-	| 'submitted'
-	| 'in_review'
-	| 'accepted'
-	| 'rejected'
-	| 'cancelled';
+type Schema = components['schemas'];
 
-export interface OrderPeriod {
-	id: number;
-	name: string;
-	opensAt: string;
-	closesAt: string;
-	createdByUserId: number;
-	dateAdded: string;
-	dateUpdated: string | null;
-	status: OrderPeriodStatus;
-}
-
-export interface CardListing {
-	id: number | null;
-	cardId: number | null;
-	ygoId: number | null;
-	ygoSet: string;
-	name: string;
-	code: string;
-	price: string;
-	rarity: string;
-	condition: string;
-	stock: number;
-	dateAdded: string | null;
-	dateUpdated: string | null;
-}
-
-export interface OrderRequestItem {
-	id: number;
-	cardListingId: number;
-	cardName: string;
-	cardSet: string;
-	cardCode: string;
-	rarity: string;
-	condition: string;
-	estimatedUnitPrice: string | null;
-	requestedQuantity: number;
-	agreedQuantity: number;
-	finalUnitPrice: string | null;
-	agreedTotal: string | null;
-}
-
-export interface OrderRequest {
-	id: number;
-	orderPeriodId: number;
-	createdByUserId: number;
-	status: OrderRequestStatus;
-	note: string | null;
-	currency: string;
-	items: OrderRequestItem[];
-	agreedTotal: string | null;
-	dateAdded: string;
-	dateUpdated: string | null;
-}
+export type CardListing = Schema['CardListingResponse'];
+export type OrderPeriod = Schema['OrderPeriodResponse'];
+export type OrderPeriodCreate = Schema['OrderPeriodCreate'];
+export type OrderPeriodUpdate = Schema['OrderPeriodUpdate'];
+export type OrderPeriodHistory = Schema['OrderPeriodHistoryResponse'];
+export type OrderPeriodStatus = Schema['OrderPeriodStatus'];
+export type OrderRequest = Schema['OrderRequestResponse'];
+export type OrderRequestCreate = Schema['OrderRequestCreate'];
+export type OrderRequestUpdate = Schema['OrderRequestUpdate'];
+export type OrderRequestItem = Schema['OrderRequestItemResponse'];
+export type OrderRequestItemCreate = Schema['OrderRequestItemCreate'];
+export type OrderRequestItemUpdate = Schema['OrderRequestItemUpdate'];
+export type OrderRequestItemPricingUpdate = Schema['OrderRequestItemPricingUpdate'];
+export type OrderRequestHistory = Schema['OrderRequestHistoryResponse'];
+export type OrderRequestStatus = Schema['OrderRequestStatus'];
+export type OrderPeriodList = Schema['OrderPeriodListResponse'];
+export type OrderRequestList = Schema['OrderRequestListResponse'];

@@ -1,0 +1,13 @@
+---
+import AppShell from '../../../components/layout/AppShell.astro';
+import AdminOrderReview from '../../../components/workflow/AdminOrderReview.svelte';
+import '../../../styles/global.css';
+
+const id = Number(Astro.params.id);
+if (!Number.isInteger(id) || id <= 0) return Astro.redirect('/admin/orders');
+---
+
+<AppShell title={`Revisar orden #${id} | Free Win`}>
+	<AdminOrderReview client:load id={id} />
+</AppShell>
+

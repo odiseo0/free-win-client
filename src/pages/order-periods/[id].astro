@@ -1,0 +1,13 @@
+---
+import AppShell from '../../components/layout/AppShell.astro';
+import PeriodDetail from '../../components/workflow/PeriodDetail.svelte';
+import '../../styles/global.css';
+
+const id = Number(Astro.params.id);
+if (!Number.isInteger(id) || id <= 0) return Astro.redirect('/order-periods');
+---
+
+<AppShell title={`Pedido #${id} | Free Win`}>
+	<PeriodDetail client:load id={id} />
+</AppShell>
+

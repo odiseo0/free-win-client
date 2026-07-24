@@ -1,0 +1,15 @@
+---
+import AppShell from '../../components/layout/AppShell.astro';
+import OrderList from '../../components/workflow/OrderList.svelte';
+import '../../styles/global.css';
+---
+
+<AppShell title="Mis órdenes | Free Win">
+	<header class="mb-8">
+		<p class="text-sm font-semibold uppercase tracking-widest text-amber-400">Seguimiento</p>
+		<h1 class="page-heading mt-2">Mis órdenes</h1>
+		<p class="page-intro">Consulta el estado, las cantidades acordadas y los totales calculados por el servidor.</p>
+	</header>
+	<OrderList client:load />
+</AppShell>
+

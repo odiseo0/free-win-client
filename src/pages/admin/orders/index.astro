@@ -1,0 +1,23 @@
+---
+import AppShell from '../../../components/layout/AppShell.astro';
+import OrderList from '../../../components/workflow/OrderList.svelte';
+import '../../../styles/global.css';
+
+const parsedOrderPeriodId = Number(Astro.url.searchParams.get('orderPeriodId'));
+const initialOrderPeriodId = Number.isInteger(parsedOrderPeriodId) && parsedOrderPeriodId > 0
+	? parsedOrderPeriodId
+	: null;
+---
+
+<AppShell title="Revisar órdenes | Free Win">
+	<header class="mb-8">
+		<p class="text-sm font-semibold uppercase tracking-widest text-amber-400">Organización</p>
+		<h1 class="page-heading mt-2">Revisar órdenes</h1>
+		<p class="page-intro">Abre una orden para acordar cantidades, registrar precios y decidir su resultado.</p>
+	</header>
+	<nav class="mb-6 flex gap-2 text-sm" aria-label="Administración">
+		<a class="button-secondary" href="/admin/order-periods">Pedidos</a>
+		<a class="button-secondary" href="/admin/orders">Órdenes</a>
+	</nav>
+	<OrderList client:load admin initialOrderPeriodId={initialOrderPeriodId} />
+</AppShell>

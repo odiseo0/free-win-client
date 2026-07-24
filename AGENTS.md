@@ -1,3 +1,13 @@
+## Development
+
+When starting the development server, use background mode:
+
+```sh
+astro dev --background
+```
+
+Manage it with `astro dev stop`, `astro dev status`, and `astro dev logs`.
+
 ## Free Win domain and backend
 
 Free Win is a non-profit community tool that coordinates group purchases of Yu-Gi-Oh!
@@ -52,6 +62,15 @@ request field, enum, endpoint, or state transition from the UI alone.
   through components. The local development default is that address.
 - Preserve Spanish as the primary product language. Keep technical identifiers in
   English when they mirror API names or source code.
+- Keep route paths and URL segments in English (for example, `/order-periods`,
+  `/orders`, and `/admin/orders`). Visible navigation labels, headings, form labels,
+  status labels, validation, and other user-focused copy remain in Spanish.
+- The complete backend contract is generated into `src/lib/api/generated.ts`.
+  Refresh it with `pnpm api:generate` while the local backend is running, and commit
+  the result. Do not hand-edit the generated file.
+- Arbitrary backend identifiers use Astro on-demand routes through the Node adapter.
+  API records still load in focused Svelte islands so the build does not require a
+  running backend.
 
 ## Achievable development objectives
 

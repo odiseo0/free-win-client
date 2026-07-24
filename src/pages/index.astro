@@ -11,22 +11,26 @@ const workflowSteps = [
 ---
 
 <AppShell title="Free Win">
-	<section class="rounded-2xl border border-slate-800 bg-slate-900 p-6 sm:p-10">
-		<p class="text-sm font-medium text-emerald-400">Fundamentos del cliente</p>
+	<section class="overflow-hidden rounded-3xl border border-stone-800 bg-gradient-to-br from-stone-900 to-stone-950 p-6 sm:p-10 lg:p-14">
+		<p class="text-sm font-semibold uppercase tracking-widest text-amber-400">Pedidos para la comunidad</p>
 		<h1 class="mt-3 text-3xl font-bold tracking-tight text-white sm:text-5xl">Free Win</h1>
-		<p class="mt-4 max-w-2xl text-base leading-7 text-slate-300">
+		<p class="mt-4 max-w-2xl text-base leading-7 text-stone-300">
 			Un espacio comunitario para coordinar Pedidos de cartas Yu-Gi-Oh!.
 		</p>
+		<div class="mt-7 flex flex-wrap gap-3">
+			<a class="button" href="/order-periods">Ver Pedidos</a>
+			<a class="button-secondary" href="/admin/order-periods">Organizar un Pedido</a>
+		</div>
 	</section>
 
 	<section class="mt-8" aria-labelledby="workflow-title">
-		<h2 id="workflow-title" class="text-xl font-semibold text-white">Flujo de un Pedido</h2>
+		<h2 id="workflow-title" class="text-xl font-semibold text-white">Cómo funciona</h2>
 		<ol class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 			{workflowSteps.map(([number, title, description]) => (
-				<li class="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
-					<p class="text-sm font-semibold text-emerald-400">Paso {number}</p>
+				<li class="rounded-xl border border-stone-800 bg-stone-900/60 p-5">
+					<p class="text-sm font-semibold text-amber-400">Paso {number}</p>
 					<h3 class="mt-2 font-medium text-white">{title}</h3>
-					<p class="mt-2 text-sm leading-6 text-slate-400">{description}</p>
+					<p class="mt-2 text-sm leading-6 text-stone-400">{description}</p>
 				</li>
 			))}
 		</ol>

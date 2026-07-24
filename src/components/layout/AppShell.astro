@@ -1,9 +1,19 @@
 ---
 interface Props {
 	title: string;
+	description?: string;
 }
 
-const { title } = Astro.props;
+const {
+	title,
+	description = 'Free Win coordina Pedidos comunitarios de cartas Yu-Gi-Oh!.',
+} = Astro.props;
+const path = Astro.url.pathname;
+const links = [
+	{ href: '/order-periods', label: 'Pedidos', active: path.startsWith('/order-periods') },
+	{ href: '/orders', label: 'Mis órdenes', active: path.startsWith('/orders') },
+	{ href: '/admin/order-periods', label: 'Organizar', active: path.startsWith('/admin') },
+];
 ---
 
 <!doctype html>
@@ -11,21 +21,40 @@ const { title } = Astro.props;
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width" />
-		<meta name="description" content="Free Win coordina Pedidos comunitarios de cartas Yu-Gi-Oh!." />
+		<meta name="description" content={description} />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<title>{title}</title>
 	</head>
-	<body class="min-h-screen bg-slate-950 text-slate-100 antialiased">
+	<body class="min-h-screen bg-stone-950 text-stone-100 antialiased">
 		<div class="min-h-screen">
-			<header class="border-b border-slate-800 bg-slate-950/90">
-				<div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
-					<a class="font-semibold tracking-tight text-white" href="/">Free Win</a>
-					<nav aria-label="Navegación principal" class="flex gap-4 text-sm text-slate-400">
-						<span>Pedidos</span><span>Mis órdenes</span><span>Cuenta</span>
+			<header class="border-b border-stone-800 bg-stone-950/95">
+				<div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
+					<a class="flex items-center gap-3 font-semibold tracking-tight text-white" href="/">
+						<span class="grid size-9 place-items-center rounded-lg bg-amber-400 text-sm font-black text-stone-950">FW</span>
+						<span>Free Win</span>
+					</a>
+					<nav aria-label="Navegación principal" class="flex flex-wrap gap-1 text-sm">
+						{links.map((link) => (
+							<a
+								href={link.href}
+								aria-current={link.active ? 'page' : undefined}
+								class:list={[
+									'rounded-lg px-3 py-2 transition',
+									link.active
+										? 'bg-stone-800 text-white'
+										: 'text-stone-400 hover:bg-stone-900 hover:text-white',
+								]}
+							>
+								{link.label}
+							</a>
+						))}
 					</nav>
 				</div>
 			</header>
-			<main class="mx-auto max-w-6xl px-4 py-8 sm:px-6"><slot /></main>
+			<main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-12"><slot /></main>
+			<footer class="mx-auto max-w-7xl border-t border-stone-800 px-4 py-6 text-sm text-stone-500 sm:px-6">
+				Proyecto comunitario sin fines de lucro para organizar Pedidos de cartas.
+			</footer>
 		</div>
 	</body>
 </html>

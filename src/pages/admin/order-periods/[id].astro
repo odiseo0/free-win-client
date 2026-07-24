@@ -1,0 +1,18 @@
+---
+import AppShell from '../../../components/layout/AppShell.astro';
+import AdminPeriodForm from '../../../components/workflow/AdminPeriodForm.svelte';
+import '../../../styles/global.css';
+
+const id = Number(Astro.params.id);
+if (!Number.isInteger(id) || id <= 0) return Astro.redirect('/admin/order-periods');
+---
+
+<AppShell title={`Administrar Pedido #${id} | Free Win`}>
+	<header class="mb-8">
+		<p class="text-sm font-semibold uppercase tracking-widest text-amber-400">Organización</p>
+		<h1 class="page-heading mt-2">Administrar Pedido</h1>
+		<p class="page-intro">Actualiza los datos permitidos por el estado y consulta su historial.</p>
+	</header>
+	<AdminPeriodForm client:load id={id} />
+</AppShell>
+
