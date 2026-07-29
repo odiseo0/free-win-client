@@ -69,12 +69,26 @@
 	<StateNotice kind="error" message={error} />
 {:else}
 	{#if period}
-		<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+		<div class="mb-6 flex flex-wrap items-start justify-between gap-4">
 			<div>
 				<p class="text-sm text-stone-500">Pedido #{period.id}</p>
 				<span class="status mt-2">{periodStatusLabels[period.status]}</span>
+				{#if period.status !== 'open'}
+					<p class="mt-3 max-w-xl text-sm text-stone-400">
+						{period.status === 'draft'
+							? 'Podrás crear una Orden cuando comience la fecha de apertura.'
+							: 'Este Pedido ya no acepta Órdenes nuevas.'}
+					</p>
+				{/if}
 			</div>
-			<a class="button-secondary" href={`/admin/orders?orderPeriodId=${period.id}`}>Ver órdenes del Pedido</a>
+			<div class="flex flex-wrap gap-3">
+				{#if period.status === 'open'}
+					<a class="button" href={`/order-periods/${period.id}`}>Crear una Orden</a>
+				{/if}
+				<a class="button-secondary" href={`/admin/orders?orderPeriodId=${period.id}`}>
+					Ver órdenes del Pedido
+				</a>
+			</div>
 		</div>
 	{/if}
 	<form class="panel max-w-3xl" on:submit|preventDefault={save}>
@@ -118,4 +132,3 @@
 		</section>
 	{/if}
 {/if}
-

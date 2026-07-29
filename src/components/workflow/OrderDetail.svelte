@@ -11,27 +11,30 @@
 	let history: OrderRequestHistory[] = [];
 	let loading = true;
 	let saving = false;
-	let error = '';
+	let loadError = '';
+	let mutationError = '';
 	let note = '';
 	let quantities: Record<number, number> = {};
 
-	async function refreshHistory() {
-		history = await orderRequestsApi.history(id, { page: 1, shows: 100 });
-		history = [...history].sort((a, b) => b.occurredAt.localeCompare(a.occurredAt));
+	async function refresh() {
+		const [nextOrder, nextHistory] = await Promise.all([
+			orderRequestsApi.get(id),
+			orderRequestsApi.history(id, { page: 1, shows: 100 }),
+		]);
+		order = nextOrder;
+		note = nextOrder.note ?? '';
+		quantities = Object.fromEntries(
+			nextOrder.items.map((item) => [item.id, item.requestedQuantity]),
+		);
+		history = [...nextHistory].sort((a, b) => b.occurredAt.localeCompare(a.occurredAt));
 	}
 
 	async function load() {
 		loading = true;
 		try {
-			[order, history] = await Promise.all([
-				orderRequestsApi.get(id),
-				orderRequestsApi.history(id, { page: 1, shows: 100 }),
-			]);
-			note = order.note ?? '';
-			quantities = Object.fromEntries(order.items.map((item) => [item.id, item.requestedQuantity]));
-			history = [...history].sort((a, b) => b.occurredAt.localeCompare(a.occurredAt));
+			await refresh();
 		} catch (caught) {
-			error = getApiErrorMessage(caught);
+			loadError = getApiErrorMessage(caught);
 		} finally {
 			loading = false;
 		}
@@ -40,12 +43,12 @@
 	async function saveNote() {
 		if (!order) return;
 		saving = true;
-		error = '';
+		mutationError = '';
 		try {
-			order = await orderRequestsApi.updateNote(order.id, { note: note.trim() || null });
-			await refreshHistory();
+			await orderRequestsApi.updateNote(order.id, { note: note.trim() || null });
+			await refresh();
 		} catch (caught) {
-			error = getApiErrorMessage(caught);
+			mutationError = getApiErrorMessage(caught);
 		} finally {
 			saving = false;
 		}
@@ -54,19 +57,18 @@
 	async function saveQuantity(itemId: number) {
 		if (!order) return;
 		if (!isValidRequestedQuantity(quantities[itemId])) {
-			error = 'La cantidad solicitada debe ser un número entero mayor que cero.';
+			mutationError = 'La cantidad solicitada debe ser un número entero mayor que cero.';
 			return;
 		}
 		saving = true;
-		error = '';
+		mutationError = '';
 		try {
-			order = await orderRequestsApi.updateItem(order.id, itemId, {
+			await orderRequestsApi.updateItem(order.id, itemId, {
 				requestedQuantity: quantities[itemId],
 			});
-			quantities = Object.fromEntries(order.items.map((item) => [item.id, item.requestedQuantity]));
-			await refreshHistory();
+			await refresh();
 		} catch (caught) {
-			error = getApiErrorMessage(caught);
+			mutationError = getApiErrorMessage(caught);
 		} finally {
 			saving = false;
 		}
@@ -77,8 +79,8 @@
 
 {#if loading}
 	<StateNotice kind="loading" message="Cargando la orden…" />
-{:else if error && !order}
-	<StateNotice kind="error" message={error} />
+{:else if loadError && !order}
+	<StateNotice kind="error" message={loadError} />
 {:else if order}
 	<section class="panel">
 		<div class="flex flex-wrap items-start justify-between gap-4">
@@ -90,11 +92,14 @@
 			<div class="text-right">
 				<span class="status">{orderStatusLabels[order.status]}</span>
 				<p class="mt-3 text-xl font-bold text-white">{formatMoney(order.agreedTotal, order.currency)}</p>
+				<a class="button-secondary mt-4" href={`/admin/orders/${order.id}`}>
+					Revisar como organizador
+				</a>
 			</div>
 		</div>
 	</section>
 
-	{#if error}<p class="mt-5 rounded-lg bg-red-950/50 p-3 text-sm text-red-300" role="alert">{error}</p>{/if}
+	{#if mutationError}<p class="mt-5 rounded-lg bg-red-950/50 p-3 text-sm text-red-300" role="alert">{mutationError}</p>{/if}
 
 	<section class="panel mt-6">
 		<h2 class="text-lg font-semibold text-white">Cartas solicitadas</h2>

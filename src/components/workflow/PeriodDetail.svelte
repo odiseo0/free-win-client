@@ -13,7 +13,14 @@
 		OrderPeriodHistory,
 		ScrapeJobStatus,
 	} from '../../lib/api/types';
-	import { formatDate, formatMoney, isValidRequestedQuantity, periodStatusLabels } from '../../lib/workflow';
+	import {
+		formatDate,
+		formatMoney,
+		getListingSelectionLabel,
+		isListingSelectable,
+		isValidRequestedQuantity,
+		periodStatusLabels,
+	} from '../../lib/workflow';
 	import StateNotice from '../ui/StateNotice.svelte';
 
 	export let id: number;
@@ -22,7 +29,7 @@
 	let period: OrderPeriod | null = null;
 	let history: OrderPeriodHistory[] = [];
 	let loading = true;
-	let error = '';
+	let loadError = '';
 	let query = '';
 	let results: CardListing[] = [];
 	let searching = false;
@@ -33,6 +40,12 @@
 	let basket: BasketItem[] = [];
 	let note = '';
 	let submitting = false;
+	let submitError = '';
+	let selectedListingIds: number[] = [];
+
+	$: selectedListingIds = basket.flatMap((item) =>
+		item.listing.id == null ? [] : [item.listing.id],
+	);
 
 	async function load() {
 		try {
@@ -42,7 +55,7 @@
 			]);
 			history = [...history].sort((a, b) => b.occurredAt.localeCompare(a.occurredAt));
 		} catch (caught) {
-			error = getApiErrorMessage(caught);
+			loadError = getApiErrorMessage(caught);
 		} finally {
 			loading = false;
 		}
@@ -100,39 +113,34 @@
 		return 'Preparando la búsqueda en la fuente externa…';
 	}
 
-	function canAdd(listing: CardListing) {
-		return (
-			listing.id != null &&
-			listing.isActive &&
-			listing.stock > 0 &&
-			!basket.some((item) => item.listing.id === listing.id)
-		);
-	}
-
-	function getListingActionLabel(listing: CardListing) {
-		if (listing.id == null) return 'Preparando';
-		if (!listing.isActive || listing.stock < 1) return 'Sin stock';
-		if (basket.some((item) => item.listing.id === listing.id)) return 'Añadida';
-		return 'Añadir';
-	}
-
 	function add(listing: CardListing) {
-		if (listing.id == null || basket.some((item) => item.listing.id === listing.id)) return;
+		if (!isListingSelectable(listing, selectedListingIds)) return;
 		basket = [...basket, { listing, quantity: 1 }];
+		submitError = '';
 	}
 
 	function remove(listingId: number | null | undefined) {
 		basket = basket.filter((item) => item.listing.id !== listingId);
+		submitError = '';
 	}
 
 	async function submitOrder() {
-		if (basket.length === 0) return;
-		if (basket.some((item) => !isValidRequestedQuantity(item.quantity))) {
-			error = 'Cada cantidad solicitada debe ser un número entero mayor que cero.';
+		if (basket.length === 0) {
+			submitError = 'Añade al menos una publicación antes de enviar la orden.';
+			return;
+		}
+		if (
+			basket.some(
+				(item) =>
+					item.listing.id == null ||
+					!isValidRequestedQuantity(item.quantity, item.listing.stock),
+			)
+		) {
+			submitError = 'Cada cantidad debe ser un número entero entre uno y el stock disponible.';
 			return;
 		}
 		submitting = true;
-		error = '';
+		submitError = '';
 		try {
 			const order = await orderRequestsApi.create({
 				orderPeriodId: id,
@@ -144,7 +152,7 @@
 			});
 			window.location.assign(`/orders/${order.id}`);
 		} catch (caught) {
-			error = getApiErrorMessage(caught);
+			submitError = getApiErrorMessage(caught);
 			submitting = false;
 		}
 	}
@@ -155,8 +163,8 @@
 
 {#if loading}
 	<StateNotice kind="loading" message="Cargando el Pedido…" />
-{:else if error && !period}
-	<StateNotice kind="error" message={error} />
+{:else if loadError && !period}
+	<StateNotice kind="error" message={loadError} />
 {:else if period}
 	<section class="panel">
 		<div class="flex flex-wrap items-start justify-between gap-4">
@@ -196,10 +204,10 @@
 								<button
 									class="button-secondary shrink-0"
 									type="button"
-									disabled={!canAdd(listing)}
+									disabled={!isListingSelectable(listing, selectedListingIds)}
 									on:click={() => add(listing)}
 								>
-									{getListingActionLabel(listing)}
+									{getListingSelectionLabel(listing, selectedListingIds)}
 								</button>
 							</li>
 						{/each}
@@ -221,13 +229,28 @@
 						{#each basket as item}
 							<li class="rounded-xl border border-stone-800 p-3">
 								<p class="text-sm font-medium text-white">{item.listing.name}</p>
+								<p class="mt-1 text-xs text-stone-500">
+									{formatMoney(item.listing.price)} · Stock disponible: {item.listing.stock}
+								</p>
 								<div class="mt-3 flex items-end gap-2">
 									<label class="flex-1">
 										<span class="label">Cantidad</span>
-										<input class="field" type="number" min="1" max={Math.max(item.listing.stock, 1)} bind:value={item.quantity} />
+										<input
+											class="field"
+											type="number"
+											min="1"
+											max={Math.max(item.listing.stock, 1)}
+											aria-invalid={!isValidRequestedQuantity(item.quantity, item.listing.stock)}
+											bind:value={item.quantity}
+										/>
 									</label>
 									<button class="button-secondary" type="button" on:click={() => remove(item.listing.id)}>Quitar</button>
 								</div>
+								{#if !isValidRequestedQuantity(item.quantity, item.listing.stock)}
+									<p class="mt-2 text-xs text-red-300" role="alert">
+										Usa una cantidad entre 1 y {item.listing.stock}.
+									</p>
+								{/if}
 							</li>
 						{/each}
 					</ul>
@@ -235,8 +258,13 @@
 						<span class="label">Nota opcional</span>
 						<textarea class="field min-h-24" maxlength="2000" bind:value={note} placeholder="Condición, prioridad u otra indicación"></textarea>
 					</label>
-					{#if error}<p class="mt-4 text-sm text-red-300" role="alert">{error}</p>{/if}
-					<button class="button mt-5 w-full" type="button" disabled={submitting} on:click={submitOrder}>
+					{#if submitError}<p class="mt-4 text-sm text-red-300" role="alert">{submitError}</p>{/if}
+					<button
+						class="button mt-5 w-full"
+						type="button"
+						disabled={submitting || basket.some((item) => !isValidRequestedQuantity(item.quantity, item.listing.stock))}
+						on:click={submitOrder}
+					>
 						{submitting ? 'Enviando…' : 'Enviar orden'}
 					</button>
 				{/if}

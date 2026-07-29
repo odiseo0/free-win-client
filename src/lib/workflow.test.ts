@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import type { OrderRequest, OrderRequestItem } from './api/types';
+import type { CardListing, OrderRequest, OrderRequestItem } from './api/types';
 import {
 	areValidPriceComponents,
 	canAcceptOrder,
 	canEditParticipantOrder,
 	canStartReview,
+	getListingSelectionLabel,
 	isItemFullyPriced,
+	isListingSelectable,
 	isValidAgreedQuantity,
 	isValidRequestedQuantity,
 	readIdFromPath,
@@ -43,6 +45,12 @@ function order(status: OrderRequest['status'], items = [item]): OrderRequest {
 	};
 }
 
+const listing = {
+	id: 12,
+	isActive: true,
+	stock: 3,
+} as CardListing;
+
 describe('workflow rules', () => {
 	it('treats zero-valued pricing as complete', () => {
 		expect(isItemFullyPriced(item)).toBe(true);
@@ -64,12 +72,26 @@ describe('workflow rules', () => {
 
 	it('validates composition and review inputs without rejecting zero prices', () => {
 		expect(isValidRequestedQuantity(1)).toBe(true);
+		expect(isValidRequestedQuantity(3, 3)).toBe(true);
+		expect(isValidRequestedQuantity(4, 3)).toBe(false);
 		expect(isValidRequestedQuantity(0)).toBe(false);
 		expect(isValidAgreedQuantity(2, 2)).toBe(true);
 		expect(isValidAgreedQuantity(3, 2)).toBe(false);
 		expect(areValidPriceComponents('0', 0, '3.50')).toBe(true);
 		expect(areValidPriceComponents('', 0, '3.50')).toBe(false);
 		expect(areValidPriceComponents('-1', 0, '3.50')).toBe(false);
+	});
+
+	it('only selects persisted, active, in-stock listings once', () => {
+		expect(isListingSelectable(listing)).toBe(true);
+		expect(isListingSelectable(listing, [12])).toBe(false);
+		expect(isListingSelectable({ ...listing, id: null })).toBe(false);
+		expect(isListingSelectable({ ...listing, isActive: false })).toBe(false);
+		expect(isListingSelectable({ ...listing, stock: 0 })).toBe(false);
+
+		expect(getListingSelectionLabel(listing, [12])).toBe('Añadida');
+		expect(getListingSelectionLabel({ ...listing, id: null })).toBe('Preparando');
+		expect(getListingSelectionLabel({ ...listing, stock: 0 })).toBe('Sin stock');
 	});
 });
 

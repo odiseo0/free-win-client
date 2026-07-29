@@ -1,4 +1,5 @@
 import type {
+	CardListing,
 	OrderPeriodStatus,
 	OrderRequest,
 	OrderRequestHistory,
@@ -74,8 +75,37 @@ export function canAcceptOrder(order: OrderRequest): boolean {
 	);
 }
 
-export function isValidRequestedQuantity(quantity: number): boolean {
-	return Number.isInteger(quantity) && quantity > 0;
+export function isListingSelectable(
+	listing: CardListing,
+	selectedListingIds: readonly number[] = [],
+): boolean {
+	return (
+		listing.id != null &&
+		listing.isActive &&
+		listing.stock > 0 &&
+		!selectedListingIds.includes(listing.id)
+	);
+}
+
+export function getListingSelectionLabel(
+	listing: CardListing,
+	selectedListingIds: readonly number[] = [],
+): string {
+	if (listing.id == null) return 'Preparando';
+	if (!listing.isActive || listing.stock < 1) return 'Sin stock';
+	if (selectedListingIds.includes(listing.id)) return 'Añadida';
+	return 'Añadir';
+}
+
+export function isValidRequestedQuantity(
+	quantity: number,
+	availableStock?: number,
+): boolean {
+	return (
+		Number.isInteger(quantity) &&
+		quantity > 0 &&
+		(availableStock === undefined || quantity <= availableStock)
+	);
 }
 
 export function isValidAgreedQuantity(quantity: number, requestedQuantity: number): boolean {

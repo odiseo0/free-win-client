@@ -19,7 +19,8 @@
 	let drafts: Record<number, ReviewDraft> = {};
 	let loading = true;
 	let saving = false;
-	let error = '';
+	let loadError = '';
+	let actionError = '';
 
 	function syncDrafts(value: OrderRequest) {
 		drafts = Object.fromEntries(value.items.map((item) => [item.id, {
@@ -30,32 +31,42 @@
 		}]));
 	}
 
+	async function refresh() {
+		const [nextOrder, nextHistory] = await Promise.all([
+			orderRequestsApi.get(id),
+			orderRequestsApi.history(id, { page: 1, shows: 100 }),
+		]);
+		order = nextOrder;
+		syncDrafts(nextOrder);
+		history = [...nextHistory].sort((a, b) => b.occurredAt.localeCompare(a.occurredAt));
+	}
+
 	async function load() {
 		loading = true;
 		try {
-			[order, history] = await Promise.all([
-				orderRequestsApi.get(id),
-				orderRequestsApi.history(id, { page: 1, shows: 100 }),
-			]);
-			syncDrafts(order);
-			history = [...history].sort((a, b) => b.occurredAt.localeCompare(a.occurredAt));
+			await refresh();
 		} catch (caught) {
-			error = getApiErrorMessage(caught);
+			loadError = getApiErrorMessage(caught);
 		} finally {
 			loading = false;
 		}
 	}
 
-	async function mutate(action: () => Promise<OrderRequest>) {
+	async function mutate(actions: Array<() => Promise<OrderRequest>>) {
 		saving = true;
-		error = '';
+		actionError = '';
 		try {
-			order = await action();
-			syncDrafts(order);
-			history = await orderRequestsApi.history(id, { page: 1, shows: 100 });
-			history = [...history].sort((a, b) => b.occurredAt.localeCompare(a.occurredAt));
+			for (const action of actions) {
+				await action();
+				await refresh();
+			}
 		} catch (caught) {
-			error = getApiErrorMessage(caught);
+			actionError = getApiErrorMessage(caught);
+			try {
+				await refresh();
+			} catch {
+				// Preserve the mutation error; the user can reload if the refresh also failed.
+			}
 		} finally {
 			saving = false;
 		}
@@ -65,12 +76,12 @@
 		if (!order) return;
 		const draft = drafts[itemId];
 		const item = order.items.find((candidate) => candidate.id === itemId);
-		if (!item || !isValidAgreedQuantity(draft.agreedQuantity, item.requestedQuantity)) {
-			error = 'La cantidad acordada debe estar entre cero y la cantidad solicitada.';
+		if (!draft || !item || !isValidAgreedQuantity(draft.agreedQuantity, item.requestedQuantity)) {
+			actionError = 'La cantidad acordada debe estar entre cero y la cantidad solicitada.';
 			return;
 		}
 		if ([draft.cardUnitPrice, draft.shippingUnitPrice, draft.taxUnitPrice].some((value) => value === '')) {
-			error = 'Completa los tres componentes de precio. El valor cero es válido.';
+			actionError = 'Completa los tres componentes de precio. El valor cero es válido.';
 			return;
 		}
 		if (!areValidPriceComponents(
@@ -78,21 +89,23 @@
 			draft.shippingUnitPrice,
 			draft.taxUnitPrice,
 		)) {
-			error = 'Cada precio debe ser un número mayor o igual a cero.';
+			actionError = 'Cada precio debe ser un número mayor o igual a cero.';
 			return;
 		}
-		await mutate(async () => {
-			await orderRequestsApi.updateItem(order!.id, itemId, { agreedQuantity: draft.agreedQuantity });
-			return orderRequestsApi.updatePricing(order!.id, itemId, {
+		await mutate([
+			() => orderRequestsApi.updateItem(order!.id, itemId, {
+				agreedQuantity: draft.agreedQuantity,
+			}),
+			() => orderRequestsApi.updatePricing(order!.id, itemId, {
 				cardUnitPrice: draft.cardUnitPrice,
 				shippingUnitPrice: draft.shippingUnitPrice,
 				taxUnitPrice: draft.taxUnitPrice,
-			});
-		});
+			}),
+		]);
 	}
 
 	function confirmTransition(message: string, action: () => Promise<OrderRequest>) {
-		if (window.confirm(message)) void mutate(action);
+		if (window.confirm(message)) void mutate([action]);
 	}
 
 	onMount(load);
@@ -100,8 +113,8 @@
 
 {#if loading}
 	<StateNotice kind="loading" message="Cargando la revisión…" />
-{:else if error && !order}
-	<StateNotice kind="error" message={error} />
+{:else if loadError && !order}
+	<StateNotice kind="error" message={loadError} />
 {:else if order}
 	<section class="panel">
 		<div class="flex flex-wrap items-start justify-between gap-4">
@@ -112,12 +125,15 @@
 			<div class="text-right">
 				<span class="status">{orderStatusLabels[order.status]}</span>
 				<p class="mt-3 text-xl font-bold text-white">{formatMoney(order.agreedTotal, order.currency)}</p>
+				<a class="button-secondary mt-4" href={`/orders/${order.id}`}>
+					Ver como participante
+				</a>
 			</div>
 		</div>
 		{#if order.note}<p class="mt-5 rounded-xl bg-stone-950 p-4 text-sm text-stone-300">{order.note}</p>{/if}
 		<div class="mt-6 flex flex-wrap gap-3">
 			{#if canStartReview(order)}
-				<button class="button" disabled={saving} on:click={() => mutate(() => orderRequestsApi.startReview(order!.id))}>Iniciar revisión</button>
+				<button class="button" disabled={saving} on:click={() => mutate([() => orderRequestsApi.startReview(order!.id)])}>Iniciar revisión</button>
 			{/if}
 			{#if order.status === 'submitted' || order.status === 'in_review'}
 				<button
@@ -136,7 +152,7 @@
 		</div>
 	</section>
 
-	{#if error}<p class="mt-5 rounded-lg bg-red-950/50 p-3 text-sm text-red-300" role="alert">{error}</p>{/if}
+	{#if actionError}<p class="mt-5 rounded-lg bg-red-950/50 p-3 text-sm text-red-300" role="alert">{actionError}</p>{/if}
 
 	<section class="mt-6 space-y-4">
 		{#each order.items as item}
