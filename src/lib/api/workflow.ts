@@ -1,6 +1,5 @@
-import { apiRequest } from './client';
+import { backendRequest } from './client';
 import type {
-	CardListing,
 	OrderPeriod,
 	OrderPeriodCreate,
 	OrderPeriodHistory,
@@ -24,24 +23,16 @@ export interface PageQuery {
 
 export const orderPeriodsApi = {
 	list: (query: PageQuery = {}) =>
-		apiRequest<OrderPeriodList>('/order-periods/', { query: { ...query } }),
-	get: (id: number) => apiRequest<OrderPeriod>(`/order-periods/${id}`),
+		backendRequest<OrderPeriodList>('/order-periods/', { query: { ...query } }),
+	get: (id: number) => backendRequest<OrderPeriod>(`/order-periods/${id}`),
 	history: (id: number, query: PageQuery = {}) =>
-		apiRequest<OrderPeriodHistory[]>(`/order-periods/${id}/history`, { query: { ...query } }),
+		backendRequest<OrderPeriodHistory[]>(`/order-periods/${id}/history`, { query: { ...query } }),
 	create: (body: OrderPeriodCreate) =>
-		apiRequest<OrderPeriod>('/order-periods/', { method: 'POST', body }),
+		backendRequest<OrderPeriod>('/order-periods/', { method: 'POST', body }),
 	update: (id: number, body: OrderPeriodUpdate) =>
-		apiRequest<OrderPeriod>(`/order-periods/${id}`, { method: 'PATCH', body }),
+		backendRequest<OrderPeriod>(`/order-periods/${id}`, { method: 'PATCH', body }),
 	close: (id: number) =>
-		apiRequest<OrderPeriod>(`/order-periods/${id}/close`, { method: 'POST' }),
-};
-
-export const cardListingsApi = {
-	list: (query: PageQuery = {}) =>
-		apiRequest<{ items: CardListing[]; total: number }>('/card-listings/', { query: { ...query } }),
-	search: (query: string, limit = 30) =>
-		apiRequest<CardListing[]>('/card-listings/search', { query: { query, limit } }),
-	get: (id: number) => apiRequest<CardListing>(`/card-listings/${id}`),
+		backendRequest<OrderPeriod>(`/order-periods/${id}/close`, { method: 'POST' }),
 };
 
 export interface OrderRequestListQuery extends PageQuery {
@@ -51,27 +42,27 @@ export interface OrderRequestListQuery extends PageQuery {
 
 export const orderRequestsApi = {
 	list: (query: OrderRequestListQuery = {}) =>
-		apiRequest<OrderRequestList>('/order-requests/', { query: { ...query } }),
-	get: (id: number) => apiRequest<OrderRequest>(`/order-requests/${id}`),
+		backendRequest<OrderRequestList>('/order-requests/', { query: { ...query } }),
+	get: (id: number) => backendRequest<OrderRequest>(`/order-requests/${id}`),
 	history: (id: number, query: PageQuery = {}) =>
-		apiRequest<OrderRequestHistory[]>(`/order-requests/${id}/history`, { query: { ...query } }),
+		backendRequest<OrderRequestHistory[]>(`/order-requests/${id}/history`, { query: { ...query } }),
 	create: (body: OrderRequestCreate) =>
-		apiRequest<OrderRequest>('/order-requests/', { method: 'POST', body }),
+		backendRequest<OrderRequest>('/order-requests/', { method: 'POST', body }),
 	updateNote: (id: number, body: OrderRequestUpdate) =>
-		apiRequest<OrderRequest>(`/order-requests/${id}`, { method: 'PATCH', body }),
+		backendRequest<OrderRequest>(`/order-requests/${id}`, { method: 'PATCH', body }),
 	addItem: (id: number, body: OrderRequestItemCreate) =>
-		apiRequest<OrderRequest>(`/order-requests/${id}/items`, { method: 'POST', body }),
+		backendRequest<OrderRequest>(`/order-requests/${id}/items`, { method: 'POST', body }),
 	updateItem: (id: number, itemId: number, body: OrderRequestItemUpdate) =>
-		apiRequest<OrderRequest>(`/order-requests/${id}/items/${itemId}`, {
+		backendRequest<OrderRequest>(`/order-requests/${id}/items/${itemId}`, {
 			method: 'PATCH',
 			body,
 		}),
 	removeItem: (id: number, itemId: number) =>
-		apiRequest<OrderRequest>(`/order-requests/${id}/items/${itemId}/remove`, {
+		backendRequest<OrderRequest>(`/order-requests/${id}/items/${itemId}/remove`, {
 			method: 'POST',
 		}),
 	restoreItem: (id: number, itemId: number) =>
-		apiRequest<OrderRequest>(`/order-requests/${id}/items/${itemId}/restore`, {
+		backendRequest<OrderRequest>(`/order-requests/${id}/items/${itemId}/restore`, {
 			method: 'POST',
 		}),
 	updatePricing: (
@@ -79,20 +70,20 @@ export const orderRequestsApi = {
 		itemId: number,
 		body: OrderRequestItemPricingUpdate,
 	) =>
-		apiRequest<OrderRequest>(`/order-requests/${id}/items/${itemId}/pricing`, {
+		backendRequest<OrderRequest>(`/order-requests/${id}/items/${itemId}/pricing`, {
 			method: 'PATCH',
 			body,
 		}),
 	startReview: (id: number) =>
-		apiRequest<OrderRequest>(`/order-requests/${id}/start-review`, { method: 'POST' }),
+		backendRequest<OrderRequest>(`/order-requests/${id}/start-review`, { method: 'POST' }),
 	accept: (id: number) =>
-		apiRequest<OrderRequest>(`/order-requests/${id}/accept`, { method: 'POST' }),
+		backendRequest<OrderRequest>(`/order-requests/${id}/accept`, { method: 'POST' }),
 	reject: (id: number) =>
-		apiRequest<OrderRequest>(`/order-requests/${id}/reject`, { method: 'POST' }),
+		backendRequest<OrderRequest>(`/order-requests/${id}/reject`, { method: 'POST' }),
 	cancel: (id: number) =>
-		apiRequest<OrderRequest>(`/order-requests/${id}/cancel`, { method: 'POST' }),
+		backendRequest<OrderRequest>(`/order-requests/${id}/cancel`, { method: 'POST' }),
 	reopen: (id: number) =>
-		apiRequest<OrderRequest>(`/order-requests/${id}/reopen-for-review`, {
+		backendRequest<OrderRequest>(`/order-requests/${id}/reopen-for-review`, {
 			method: 'POST',
 		}),
 };

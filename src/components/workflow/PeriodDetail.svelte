@@ -1,8 +1,18 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import { getApiErrorMessage } from '../../lib/api/client';
-	import { cardListingsApi, orderPeriodsApi, orderRequestsApi } from '../../lib/api/workflow';
-	import type { CardListing, OrderPeriod, OrderPeriodHistory } from '../../lib/api/types';
+	import {
+		CardSearchJobError,
+		CardSearchTimeoutError,
+		searchCardListingsUntilReady,
+	} from '../../lib/api/search';
+	import { orderPeriodsApi, orderRequestsApi } from '../../lib/api/workflow';
+	import type {
+		CardListing,
+		OrderPeriod,
+		OrderPeriodHistory,
+		ScrapeJobStatus,
+	} from '../../lib/api/types';
 	import { formatDate, formatMoney, isValidRequestedQuantity, periodStatusLabels } from '../../lib/workflow';
 	import StateNotice from '../ui/StateNotice.svelte';
 
@@ -17,6 +27,9 @@
 	let results: CardListing[] = [];
 	let searching = false;
 	let searchError = '';
+	let searchStatus = '';
+	let hasSearched = false;
+	let searchController: AbortController | null = null;
 	let basket: BasketItem[] = [];
 	let note = '';
 	let submitting = false;
@@ -36,16 +49,71 @@
 	}
 
 	async function search() {
-		if (!query.trim()) return;
+		const requestedQuery = query.trim();
+		if (!requestedQuery) return;
+		if (requestedQuery.length > 255) {
+			searchError = 'La búsqueda no puede superar los 255 caracteres.';
+			return;
+		}
+
+		searchController?.abort();
+		const controller = new AbortController();
+		searchController = controller;
 		searching = true;
 		searchError = '';
+		searchStatus = 'Consultando el catálogo…';
+		hasSearched = false;
+		results = [];
 		try {
-			results = await cardListingsApi.search(query.trim(), 30);
+			results = await searchCardListingsUntilReady(requestedQuery, {
+				limit: 30,
+				signal: controller.signal,
+				onProgress: ({ status, attempts }) => {
+					if (searchController === controller) {
+						searchStatus = getSearchStatusMessage(status, attempts);
+					}
+				},
+			});
+			hasSearched = true;
 		} catch (caught) {
-			searchError = getApiErrorMessage(caught);
+			if (caught instanceof DOMException && caught.name === 'AbortError') return;
+			searchError =
+				caught instanceof CardSearchJobError || caught instanceof CardSearchTimeoutError
+					? caught.message
+					: getApiErrorMessage(caught);
+			hasSearched = true;
 		} finally {
-			searching = false;
+			if (searchController === controller) {
+				searching = false;
+				searchStatus = '';
+				searchController = null;
+			}
 		}
+	}
+
+	function getSearchStatusMessage(status: ScrapeJobStatus, attempts?: number) {
+		if (status === 'retry_wait') {
+			return `La fuente externa pidió reintentar${attempts ? ` (intento ${attempts})` : ''}…`;
+		}
+		if (status === 'running') return 'Buscando publicaciones en la fuente externa…';
+		if (status === 'succeeded') return 'Actualizando los resultados…';
+		return 'Preparando la búsqueda en la fuente externa…';
+	}
+
+	function canAdd(listing: CardListing) {
+		return (
+			listing.id != null &&
+			listing.isActive &&
+			listing.stock > 0 &&
+			!basket.some((item) => item.listing.id === listing.id)
+		);
+	}
+
+	function getListingActionLabel(listing: CardListing) {
+		if (listing.id == null) return 'Preparando';
+		if (!listing.isActive || listing.stock < 1) return 'Sin stock';
+		if (basket.some((item) => item.listing.id === listing.id)) return 'Añadida';
+		return 'Añadir';
 	}
 
 	function add(listing: CardListing) {
@@ -82,6 +150,7 @@
 	}
 
 	onMount(load);
+	onDestroy(() => searchController?.abort());
 </script>
 
 {#if loading}
@@ -107,12 +176,13 @@
 		<div class="mt-6 grid gap-6 lg:grid-cols-[1.35fr_0.65fr]">
 			<section class="panel">
 				<h2 class="text-xl font-semibold text-white">Buscar cartas</h2>
-				<p class="mt-2 text-sm text-stone-400">Busca por nombre o código y añade publicaciones guardadas a tu orden.</p>
+				<p class="mt-2 text-sm text-stone-400">Busca por nombre o código. Si la carta no está en el catálogo, consultaremos la fuente externa.</p>
 				<form class="mt-5 flex gap-2" on:submit|preventDefault={search}>
 					<label class="sr-only" for="card-search">Nombre o código</label>
-					<input id="card-search" class="field" bind:value={query} placeholder="Ej. Dark Magician" />
-					<button class="button" type="submit" disabled={searching}>{searching ? 'Buscando…' : 'Buscar'}</button>
+					<input id="card-search" class="field" maxlength="255" bind:value={query} placeholder="Ej. Dark Magician" />
+					<button class="button" type="submit" disabled={!query.trim()}>{searching ? 'Buscar de nuevo' : 'Buscar'}</button>
 				</form>
+				{#if searchStatus}<p class="mt-4 text-sm text-amber-200" aria-live="polite">{searchStatus}</p>{/if}
 				{#if searchError}<p class="mt-4 text-sm text-red-300" role="alert">{searchError}</p>{/if}
 				{#if results.length > 0}
 					<ul class="mt-5 divide-y divide-stone-800">
@@ -126,14 +196,19 @@
 								<button
 									class="button-secondary shrink-0"
 									type="button"
-									disabled={listing.id == null || basket.some((item) => item.listing.id === listing.id)}
+									disabled={!canAdd(listing)}
 									on:click={() => add(listing)}
 								>
-									{listing.id == null ? 'No disponible' : 'Añadir'}
+									{getListingActionLabel(listing)}
 								</button>
 							</li>
 						{/each}
 					</ul>
+					{#if results.some((listing) => listing.id == null)}
+						<p class="mt-4 text-sm text-stone-500">Las publicaciones que se están preparando podrán añadirse cuando la fuente termine de guardarlas.</p>
+					{/if}
+				{:else if hasSearched && !searchError}
+					<p class="mt-5 text-sm text-stone-500">No encontramos publicaciones para esa búsqueda.</p>
 				{/if}
 			</section>
 

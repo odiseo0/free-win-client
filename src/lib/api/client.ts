@@ -1,11 +1,12 @@
-import { apiBaseUrl } from '../../config/api';
+import { backendApiBaseUrl, searchApiBaseUrl } from '../../config/api';
 
 export class ApiError extends Error {
 	constructor(
 		public readonly status: number,
 		public readonly detail: unknown,
+		public readonly service = 'Free Win',
 	) {
-		super(`Free Win API request failed with status ${status}.`);
+		super(`${service} request failed with status ${status}.`);
 		this.name = 'ApiError';
 	}
 }
@@ -15,8 +16,12 @@ export interface ApiClientOptions extends Omit<RequestInit, 'body'> {
 	body?: unknown;
 }
 
-function createUrl(path: string, query?: ApiClientOptions['query']): URL {
-	const url = new URL(path.replace(/^\//, ''), `${apiBaseUrl}/`);
+function createUrl(
+	baseUrl: string,
+	path: string,
+	query?: ApiClientOptions['query'],
+): URL {
+	const url = new URL(path.replace(/^\//, ''), `${baseUrl}/`);
 
 	for (const [key, value] of Object.entries(query ?? {})) {
 		if (value !== undefined) url.searchParams.set(key, String(value));
@@ -25,33 +30,38 @@ function createUrl(path: string, query?: ApiClientOptions['query']): URL {
 	return url;
 }
 
-export async function apiRequest<T>(
-	path: string,
-	{ query, headers, body, ...options }: ApiClientOptions = {},
-): Promise<T> {
-	const response = await fetch(createUrl(path, query), {
-		...options,
-		body: body === undefined ? undefined : JSON.stringify(body),
-		headers: {
-			Accept: 'application/json',
-			...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
-			...headers,
-		},
-	});
+export function createApiRequest(baseUrl: string, service: string) {
+	return async function request<T>(
+		path: string,
+		{ query, headers, body, ...options }: ApiClientOptions = {},
+	): Promise<T> {
+		const response = await fetch(createUrl(baseUrl, path, query), {
+			...options,
+			body: body === undefined ? undefined : JSON.stringify(body),
+			headers: {
+				Accept: 'application/json',
+				...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+				...headers,
+			},
+		});
 
-	if (!response.ok) {
-		let detail: unknown = null;
-		try {
-			detail = await response.json();
-		} catch {
-			detail = await response.text();
+		if (!response.ok) {
+			let detail: unknown = null;
+			try {
+				detail = await response.json();
+			} catch {
+				detail = await response.text();
+			}
+			throw new ApiError(response.status, detail, service);
 		}
-		throw new ApiError(response.status, detail);
-	}
 
-	if (response.status === 204) return undefined as T;
-	return response.json() as Promise<T>;
+		if (response.status === 204) return undefined as T;
+		return response.json() as Promise<T>;
+	};
 }
+
+export const backendRequest = createApiRequest(backendApiBaseUrl, 'Free Win Backend');
+export const searchRequest = createApiRequest(searchApiBaseUrl, 'Free Win Search');
 
 export function getApiErrorMessage(error: unknown): string {
 	if (!(error instanceof ApiError)) {
@@ -72,5 +82,5 @@ export function getApiErrorMessage(error: unknown): string {
 		}
 	}
 
-	return `El servidor respondió con un error (${error.status}).`;
+	return `${error.service} respondió con un error (${error.status}).`;
 }

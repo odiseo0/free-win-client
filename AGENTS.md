@@ -58,16 +58,17 @@ request field, enum, endpoint, or state transition from the UI alone.
   Prefer reusable semantic component patterns over one-off, repeated utility groups.
 - Design mobile-first and make status, price, quantity, and validation information
   readable without relying on color alone.
-- Keep external API URLs configurable rather than scattering `127.0.0.1:8000`
+- Keep external API URLs configurable rather than scattering `127.0.0.1:8001`
   through components. The local development default is that address.
 - Preserve Spanish as the primary product language. Keep technical identifiers in
   English when they mirror API names or source code.
 - Keep route paths and URL segments in English (for example, `/order-periods`,
   `/orders`, and `/admin/orders`). Visible navigation labels, headings, form labels,
   status labels, validation, and other user-focused copy remain in Spanish.
-- The complete backend contract is generated into `src/lib/api/generated.ts`.
-  Refresh it with `pnpm api:generate` while the local backend is running, and commit
-  the result. Do not hand-edit the generated file.
+- The backend and search contracts are generated into
+  `src/lib/api/backend.generated.ts` and `src/lib/api/search.generated.ts`.
+  Refresh them with `pnpm api:generate` while both local services are running, and
+  commit the result. Do not hand-edit generated files.
 - Arbitrary backend identifiers use Astro on-demand routes through the Node adapter.
   API records still load in focused Svelte islands so the build does not require a
   running backend.
