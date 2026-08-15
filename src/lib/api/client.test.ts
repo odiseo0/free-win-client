@@ -25,7 +25,7 @@ describe('service API clients', () => {
 		});
 
 		const [url, options] = fetchMock.mock.calls[0];
-		expect(String(url)).toBe('http://127.0.0.1:8001/example?page=2');
+		expect(String(url)).toBe('http://127.0.0.1:8000/example?page=2');
 		expect(options.body).toBe(JSON.stringify({ name: 'Pedido' }));
 		expect(options.headers).toMatchObject({
 			Accept: 'application/json',
@@ -65,7 +65,7 @@ describe('service API clients', () => {
 		});
 
 		expect(String(fetchMock.mock.calls[0][0])).toBe(
-			'http://127.0.0.1:8000/card-listings/search?query=Dark+Magician&limit=30',
+			'http://127.0.0.1:8001/card-listings/search?query=Dark+Magician&limit=30',
 		);
 	});
 });

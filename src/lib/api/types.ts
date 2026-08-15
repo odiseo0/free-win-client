@@ -18,6 +18,7 @@ export type OrderPeriodStatus = BackendSchema['OrderPeriodStatus'];
 export type OrderRequest = BackendSchema['OrderRequestResponse'];
 export type OrderRequestCreate = BackendSchema['OrderRequestCreate'];
 export type OrderRequestUpdate = BackendSchema['OrderRequestUpdate'];
+export type OrderRequestPricingUpdate = BackendSchema['OrderRequestPricingUpdate'];
 export type OrderRequestItem = BackendSchema['OrderRequestItemResponse'];
 export type OrderRequestItemCreate = BackendSchema['OrderRequestItemCreate'];
 export type OrderRequestItemUpdate = BackendSchema['OrderRequestItemUpdate'];

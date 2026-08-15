@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import type { CardListing, OrderRequest, OrderRequestItem } from './api/types';
 import {
 	areValidPriceComponents,
+	calculateDefaultTaxUnitPrice,
+	calculateItemPricingPreview,
+	calculateOrderPricingPreview,
 	canAcceptOrder,
 	canEditParticipantOrder,
 	canStartReview,
@@ -25,7 +28,6 @@ const item = {
 	requestedQuantity: 2,
 	agreedQuantity: 2,
 	cardUnitPrice: '0',
-	shippingUnitPrice: '0',
 	taxUnitPrice: '0',
 	dateAdded: '2026-01-01T00:00:00Z',
 	finalUnitPrice: '0',
@@ -39,6 +41,7 @@ function order(status: OrderRequest['status'], items = [item]): OrderRequest {
 		createdByUserId: 3,
 		status,
 		currency: 'USD',
+		shippingPrice: '5.00',
 		items,
 		dateAdded: '2026-01-01T00:00:00Z',
 		agreedTotal: status === 'accepted' ? '0' : null,
@@ -80,6 +83,47 @@ describe('workflow rules', () => {
 		expect(areValidPriceComponents('0', 0, '3.50')).toBe(true);
 		expect(areValidPriceComponents('', 0, '3.50')).toBe(false);
 		expect(areValidPriceComponents('-1', 0, '3.50')).toBe(false);
+	});
+
+	it('calculates the default 16% unit tax rounded to cents', () => {
+		expect(calculateDefaultTaxUnitPrice('10')).toBe('1.60');
+		expect(calculateDefaultTaxUnitPrice('3.50')).toBe('0.56');
+		expect(calculateDefaultTaxUnitPrice('0.29')).toBe('0.05');
+		expect(calculateDefaultTaxUnitPrice('')).toBe('');
+		expect(calculateDefaultTaxUnitPrice('-1')).toBe('');
+	});
+
+	it('previews item pricing without applying order shipping per copy', () => {
+		expect(calculateItemPricingPreview('0.79', '0.13', 3)).toEqual({
+			cardUnitPrice: 0.79,
+			taxUnitPrice: 0.13,
+			finalUnitPrice: 0.92,
+			agreedTotal: 2.76,
+		});
+		expect(calculateItemPricingPreview('', '0.13', 3)).toBeNull();
+		expect(calculateItemPricingPreview('0.79', '0.13', -1)).toBeNull();
+	});
+
+	it('adds fixed shipping once to the visual order breakdown', () => {
+		expect(calculateOrderPricingPreview([
+			{ cardUnitPrice: '0.79', taxUnitPrice: '0.13', agreedQuantity: 3 },
+			{ cardUnitPrice: '1.00', taxUnitPrice: '0.16', agreedQuantity: 1 },
+			{
+				cardUnitPrice: '100.00',
+				taxUnitPrice: '16.00',
+				agreedQuantity: 1,
+				removedAt: '2026-08-14T20:00:00Z',
+			},
+		], '5.00')).toEqual({
+			cardSubtotal: 3.37,
+			taxTotal: 0.55,
+			shippingPrice: 5,
+			agreedTotal: 8.92,
+		});
+	});
+
+	it('requires order-level shipping before acceptance', () => {
+		expect(canAcceptOrder({ ...order('in_review'), shippingPrice: null })).toBe(false);
 	});
 
 	it('only selects persisted, active, in-stock listings once', () => {

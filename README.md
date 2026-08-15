@@ -9,11 +9,11 @@ Requisitos: Node.js 22.12 o posterior, pnpm, el backend y el buscador local disp
 
 1. Copia `.env.example` como `.env` si necesitas cambiar las URL de los servicios.
 2. Instala las dependencias con `pnpm install`.
-3. Inicia el buscador en `http://127.0.0.1:8000` y el backend en `http://127.0.0.1:8001`.
+3. Inicia el backend en `http://127.0.0.1:8000` y el buscador en `http://127.0.0.1:8001`.
 4. Inicia el cliente con `astro dev --background`.
 
-El cliente usa `PUBLIC_FREE_WIN_API_URL=http://127.0.0.1:8001` y
-`PUBLIC_FREE_WIN_SEARCH_URL=http://127.0.0.1:8000` de forma predeterminada.
+El cliente usa `PUBLIC_FREE_WIN_API_URL=http://127.0.0.1:8000` y
+`PUBLIC_FREE_WIN_SEARCH_URL=http://127.0.0.1:8001` de forma predeterminada.
 
 ## Comandos
 

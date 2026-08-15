@@ -1,5 +1,5 @@
-const DEFAULT_BACKEND_URL = 'http://127.0.0.1:8001';
-const DEFAULT_SEARCH_URL = 'http://127.0.0.1:8000';
+const DEFAULT_BACKEND_URL = 'http://127.0.0.1:8000';
+const DEFAULT_SEARCH_URL = 'http://127.0.0.1:8001';
 
 function removeTrailingSlash(value: string): string {
 	return value.replace(/\/+$/, '');

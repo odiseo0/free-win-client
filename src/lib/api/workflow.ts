@@ -12,6 +12,7 @@ import type {
 	OrderRequestItemPricingUpdate,
 	OrderRequestItemUpdate,
 	OrderRequestList,
+	OrderRequestPricingUpdate,
 	OrderRequestStatus,
 	OrderRequestUpdate,
 } from './types';
@@ -50,6 +51,11 @@ export const orderRequestsApi = {
 		backendRequest<OrderRequest>('/order-requests/', { method: 'POST', body }),
 	updateNote: (id: number, body: OrderRequestUpdate) =>
 		backendRequest<OrderRequest>(`/order-requests/${id}`, { method: 'PATCH', body }),
+	updateOrderPricing: (id: number, body: OrderRequestPricingUpdate) =>
+		backendRequest<OrderRequest>(`/order-requests/${id}/pricing`, {
+			method: 'PATCH',
+			body,
+		}),
 	addItem: (id: number, body: OrderRequestItemCreate) =>
 		backendRequest<OrderRequest>(`/order-requests/${id}/items`, { method: 'POST', body }),
 	updateItem: (id: number, itemId: number, body: OrderRequestItemUpdate) =>

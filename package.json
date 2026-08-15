@@ -12,8 +12,8 @@
     "check": "astro check",
     "test": "vitest run",
     "api:generate": "pnpm api:generate:backend && pnpm api:generate:search",
-    "api:generate:backend": "openapi-typescript http://127.0.0.1:8001/openapi.json -o src/lib/api/backend.generated.ts",
-    "api:generate:search": "openapi-typescript http://127.0.0.1:8000/openapi.json -o src/lib/api/search.generated.ts",
+    "api:generate:backend": "openapi-typescript http://127.0.0.1:8000/openapi.json -o src/lib/api/backend.generated.ts",
+    "api:generate:search": "openapi-typescript http://127.0.0.1:8001/openapi.json -o src/lib/api/search.generated.ts",
     "start": "node ./dist/server/entry.mjs",
     "preview": "astro preview",
     "astro": "astro"

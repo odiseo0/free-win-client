@@ -7,6 +7,9 @@ import type {
 	OrderRequestStatus,
 } from './api/types';
 
+export const DEFAULT_SHIPPING_PRICE = '5.00';
+export const DEFAULT_TAX_RATE = 0.16;
+
 export const periodStatusLabels: Record<OrderPeriodStatus, string> = {
 	draft: 'Borrador',
 	open: 'Abierto',
@@ -59,8 +62,6 @@ export function isItemFullyPriced(item: OrderRequestItem): boolean {
 	return (
 		item.cardUnitPrice !== null &&
 		item.cardUnitPrice !== undefined &&
-		item.shippingUnitPrice !== null &&
-		item.shippingUnitPrice !== undefined &&
 		item.taxUnitPrice !== null &&
 		item.taxUnitPrice !== undefined
 	);
@@ -70,6 +71,8 @@ export function canAcceptOrder(order: OrderRequest): boolean {
 	const activeItems = order.items.filter((item) => !item.removedAt);
 	return (
 		order.status === 'in_review' &&
+		order.shippingPrice !== null &&
+		order.shippingPrice !== undefined &&
 		activeItems.length > 0 &&
 		activeItems.every(isItemFullyPriced)
 	);
@@ -120,6 +123,98 @@ export function areValidPriceComponents(
 		const parsed = Number(value);
 		return Number.isFinite(parsed) && parsed >= 0;
 	});
+}
+
+export function calculateDefaultTaxUnitPrice(
+	cardUnitPrice: string | number,
+): string {
+	if (typeof cardUnitPrice === 'string' && cardUnitPrice.trim() === '') return '';
+	const parsed = Number(cardUnitPrice);
+	if (!Number.isFinite(parsed) || parsed < 0) return '';
+	return (parsed * DEFAULT_TAX_RATE).toFixed(2);
+}
+
+export interface ItemPricingPreview {
+	cardUnitPrice: number;
+	taxUnitPrice: number;
+	finalUnitPrice: number;
+	agreedTotal: number;
+}
+
+function roundMoney(value: number): number {
+	return Math.round(value * 100) / 100;
+}
+
+export function calculateItemPricingPreview(
+	cardUnitPrice: string | number,
+	taxUnitPrice: string | number,
+	agreedQuantity: number,
+): ItemPricingPreview | null {
+	if (
+		!Number.isInteger(agreedQuantity) ||
+		agreedQuantity < 0 ||
+		!areValidPriceComponents(cardUnitPrice, taxUnitPrice)
+	) {
+		return null;
+	}
+
+	const card = Number(cardUnitPrice);
+	const tax = Number(taxUnitPrice);
+	const finalUnitPrice = roundMoney(card + tax);
+
+	return {
+		cardUnitPrice: card,
+		taxUnitPrice: tax,
+		finalUnitPrice,
+		agreedTotal: roundMoney(finalUnitPrice * agreedQuantity),
+	};
+}
+
+export interface OrderPricingPreviewItem {
+	cardUnitPrice: string | number;
+	taxUnitPrice: string | number;
+	agreedQuantity: number;
+	removedAt?: string | null;
+}
+
+export interface OrderPricingPreview {
+	cardSubtotal: number;
+	taxTotal: number;
+	shippingPrice: number;
+	agreedTotal: number;
+}
+
+export function calculateOrderPricingPreview(
+	items: readonly OrderPricingPreviewItem[],
+	shippingPrice: string | number,
+): OrderPricingPreview | null {
+	if (!areValidPriceComponents(shippingPrice)) return null;
+
+	let cardSubtotal = 0;
+	let taxTotal = 0;
+
+	for (const item of items) {
+		if (item.removedAt) continue;
+		const preview = calculateItemPricingPreview(
+			item.cardUnitPrice,
+			item.taxUnitPrice,
+			item.agreedQuantity,
+		);
+		if (!preview) return null;
+		cardSubtotal += preview.cardUnitPrice * item.agreedQuantity;
+		taxTotal += preview.taxUnitPrice * item.agreedQuantity;
+	}
+
+	cardSubtotal = roundMoney(cardSubtotal);
+	taxTotal = roundMoney(taxTotal);
+	const shipping = Number(shippingPrice);
+
+	return {
+		cardSubtotal,
+		taxTotal,
+		shippingPrice: shipping,
+		agreedTotal: roundMoney(cardSubtotal + taxTotal + shipping),
+	};
 }
 
 export function readIdFromPath(pathname: string): number | null {

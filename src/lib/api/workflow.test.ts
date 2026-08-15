@@ -23,7 +23,7 @@ describe('order request API wrapper', () => {
 		});
 
 		const [url, options] = fetchMock.mock.calls[0];
-		expect(String(url)).toBe('http://127.0.0.1:8001/order-requests/');
+		expect(String(url)).toBe('http://127.0.0.1:8000/order-requests/');
 		expect(options.method).toBe('POST');
 		expect(JSON.parse(options.body)).toEqual({
 			orderPeriodId: 12,
@@ -47,11 +47,11 @@ describe('order request API wrapper', () => {
 		await orderRequestsApi.list({ page: 2, shows: 20, orderPeriodId: 12 });
 
 		expect(String(fetchMock.mock.calls[0][0])).toBe(
-			'http://127.0.0.1:8001/order-requests/?page=2&shows=20&orderPeriodId=12',
+			'http://127.0.0.1:8000/order-requests/?page=2&shows=20&orderPeriodId=12',
 		);
 	});
 
-	it('uses the pricing endpoint with all price components, including zero', async () => {
+	it('updates item pricing without sending order-level shipping', async () => {
 		const fetchMock = vi.fn().mockResolvedValue(
 			new Response(JSON.stringify({}), {
 				status: 200,
@@ -62,19 +62,52 @@ describe('order request API wrapper', () => {
 
 		await orderRequestsApi.updatePricing(41, 93, {
 			cardUnitPrice: '0',
-			shippingUnitPrice: '0',
 			taxUnitPrice: '0',
 		});
 
 		const [url, options] = fetchMock.mock.calls[0];
 		expect(String(url)).toBe(
-			'http://127.0.0.1:8001/order-requests/41/items/93/pricing',
+			'http://127.0.0.1:8000/order-requests/41/items/93/pricing',
 		);
 		expect(options.method).toBe('PATCH');
 		expect(JSON.parse(options.body)).toEqual({
 			cardUnitPrice: '0',
-			shippingUnitPrice: '0',
 			taxUnitPrice: '0',
 		});
+	});
+
+	it('lets the backend calculate the default tax when it is omitted', async () => {
+		const fetchMock = vi.fn().mockResolvedValue(
+			new Response(JSON.stringify({}), {
+				status: 200,
+				headers: { 'Content-Type': 'application/json' },
+			}),
+		);
+		vi.stubGlobal('fetch', fetchMock);
+
+		await orderRequestsApi.updatePricing(41, 93, {
+			cardUnitPrice: '0.79',
+		});
+
+		expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+			cardUnitPrice: '0.79',
+		});
+	});
+
+	it('updates the fixed shipping price at order level', async () => {
+		const fetchMock = vi.fn().mockResolvedValue(
+			new Response(JSON.stringify({}), {
+				status: 200,
+				headers: { 'Content-Type': 'application/json' },
+			}),
+		);
+		vi.stubGlobal('fetch', fetchMock);
+
+		await orderRequestsApi.updateOrderPricing(41, { shippingPrice: '5.00' });
+
+		const [url, options] = fetchMock.mock.calls[0];
+		expect(String(url)).toBe('http://127.0.0.1:8000/order-requests/41/pricing');
+		expect(options.method).toBe('PATCH');
+		expect(JSON.parse(options.body)).toEqual({ shippingPrice: '5.00' });
 	});
 });

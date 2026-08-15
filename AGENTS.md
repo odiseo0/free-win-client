@@ -58,8 +58,9 @@ request field, enum, endpoint, or state transition from the UI alone.
   Prefer reusable semantic component patterns over one-off, repeated utility groups.
 - Design mobile-first and make status, price, quantity, and validation information
   readable without relying on color alone.
-- Keep external API URLs configurable rather than scattering `127.0.0.1:8001`
-  through components. The local development default is that address.
+- Keep external API URLs configurable rather than scattering local service addresses
+  through components. The development defaults are backend `127.0.0.1:8000` and
+  search `127.0.0.1:8001`.
 - Preserve Spanish as the primary product language. Keep technical identifiers in
   English when they mirror API names or source code.
 - Keep route paths and URL segments in English (for example, `/order-periods`,

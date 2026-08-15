@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+    "/cards/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Buscar cartas del catálogo */
+        get: operations["searchCards"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/cards/": {
         parameters: {
             query?: never;
@@ -159,9 +176,7 @@ export interface components {
              * Sets
              * @description Sets recibidos de la fuente externa, todavía sin normalizar en campos propios.
              */
-            sets: {
-                [key: string]: unknown;
-            };
+            sets: components["schemas"]["CardSet-Input"][];
             /**
              * Cardtype
              * @description Tipo de carta (Mágica, Trampa, Monstruo)
@@ -190,17 +205,98 @@ export interface components {
             /**
              * Prices
              * @description Precios externos de referencia; no representan el precio definitivo de una Orden.
+             * @example 0.79
+             * @example 1
+             * @example 6.99
              */
-            prices: {
-                [key: string]: unknown;
-            };
+            prices: components["schemas"]["CardPrice-Input"][];
             /**
              * Images
              * @description Metadatos externos de imágenes, todavía sin normalizar.
              */
-            images: {
-                [key: string]: unknown;
-            };
+            images: components["schemas"]["CardImage"][];
+        };
+        /** CardDetailResponse */
+        CardDetailResponse: {
+            /**
+             * Ygoid
+             * @description Identificador de la carta en la fuente externa de Yu-Gi-Oh!.
+             */
+            ygoId: number;
+            /**
+             * Sets
+             * @description Sets recibidos de la fuente externa, todavía sin normalizar en campos propios.
+             */
+            sets: components["schemas"]["CardSet-Output"][];
+            /**
+             * Cardtype
+             * @description Tipo de carta (Mágica, Trampa, Monstruo)
+             */
+            cardType: string;
+            /**
+             * Race
+             * @description Tipo de monstruo.
+             */
+            race: string;
+            /**
+             * Name
+             * @description Nombre oficial de la carta.
+             */
+            name: string;
+            /**
+             * Text
+             * @description Texto oficial de la carta.
+             */
+            text: string;
+            /**
+             * Attribute
+             * @description Atributo de la carta.
+             */
+            attribute: string;
+            /**
+             * Prices
+             * @description Precios externos de referencia; no representan el precio definitivo de una Orden.
+             * @example 0.79
+             * @example 1
+             * @example 6.99
+             */
+            prices: components["schemas"]["CardPrice-Output"][];
+            /**
+             * Images
+             * @description Metadatos externos de imágenes, todavía sin normalizar.
+             */
+            images: components["schemas"]["CardImage"][];
+            /**
+             * Id
+             * @description Identificador interno de la carta.
+             */
+            id: number;
+            /**
+             * Dateadded
+             * Format: date-time
+             * @description Fecha de creación con zona horaria.
+             */
+            dateAdded: string;
+            /**
+             * Dateupdated
+             * @description Última actualización con zona horaria, si ocurrió.
+             */
+            dateUpdated?: string | null;
+            /** Listings */
+            listings?: components["schemas"]["CardListingResponse"][];
+        };
+        /** CardImage */
+        CardImage: {
+            /** Id */
+            id: number;
+            /** Imageurl */
+            imageUrl: string;
+            /** Imageurlsmall */
+            imageUrlSmall: string;
+            /** Imageurlcropped */
+            imageUrlCropped: string;
+        } & {
+            [key: string]: unknown;
         };
         /** CardListResponse */
         CardListResponse: {
@@ -251,6 +347,9 @@ export interface components {
             /**
              * Price
              * @description Precio unitario observado en la fuente externa, en USD.
+             * @example 0.79
+             * @example 1
+             * @example 6.99
              */
             price: string;
             /**
@@ -297,6 +396,36 @@ export interface components {
              */
             dateUpdated?: string | null;
         };
+        /** CardPrice */
+        "CardPrice-Input": {
+            /** Cardmarketprice */
+            cardmarketPrice?: number | string | null;
+            /** Tcgplayerprice */
+            tcgplayerPrice?: number | string | null;
+            /** Ebayprice */
+            ebayPrice?: number | string | null;
+            /** Amazonprice */
+            amazonPrice?: number | string | null;
+            /** Coolstuffincprice */
+            coolstuffincPrice?: number | string | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** CardPrice */
+        "CardPrice-Output": {
+            /** Cardmarketprice */
+            cardmarketPrice?: string | null;
+            /** Tcgplayerprice */
+            tcgplayerPrice?: string | null;
+            /** Ebayprice */
+            ebayPrice?: string | null;
+            /** Amazonprice */
+            amazonPrice?: string | null;
+            /** Coolstuffincprice */
+            coolstuffincPrice?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
         /** CardResponse */
         CardResponse: {
             /**
@@ -308,9 +437,7 @@ export interface components {
              * Sets
              * @description Sets recibidos de la fuente externa, todavía sin normalizar en campos propios.
              */
-            sets: {
-                [key: string]: unknown;
-            };
+            sets: components["schemas"]["CardSet-Output"][];
             /**
              * Cardtype
              * @description Tipo de carta (Mágica, Trampa, Monstruo)
@@ -339,17 +466,16 @@ export interface components {
             /**
              * Prices
              * @description Precios externos de referencia; no representan el precio definitivo de una Orden.
+             * @example 0.79
+             * @example 1
+             * @example 6.99
              */
-            prices: {
-                [key: string]: unknown;
-            };
+            prices: components["schemas"]["CardPrice-Output"][];
             /**
              * Images
              * @description Metadatos externos de imágenes, todavía sin normalizar.
              */
-            images: {
-                [key: string]: unknown;
-            };
+            images: components["schemas"]["CardImage"][];
             /**
              * Id
              * @description Identificador interno de la carta.
@@ -367,6 +493,91 @@ export interface components {
              */
             dateUpdated?: string | null;
         };
+        /** CardSearchDocument */
+        CardSearchDocument: {
+            /** Cardid */
+            cardId: number;
+            /** Ygoid */
+            ygoId: number;
+            /** Name */
+            name: string;
+            /** Text */
+            text: string;
+            /** Cardtype */
+            cardType: string;
+            /** Race */
+            race: string;
+            /** Attribute */
+            attribute: string | null;
+            /** Sets */
+            sets: components["schemas"]["CardSet-Output"][];
+            /** Images */
+            images: components["schemas"]["CardImage"][];
+            /**
+             * Sourceupdatedat
+             * Format: date-time
+             */
+            sourceUpdatedAt: string;
+            /**
+             * Documentversion
+             * @default 1
+             */
+            documentVersion: number;
+        };
+        /** CardSearchResponse */
+        CardSearchResponse: {
+            /** Items */
+            items: components["schemas"]["CardSearchDocument"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Shows */
+            shows: number;
+            /**
+             * Degraded
+             * @default false
+             */
+            degraded: boolean;
+        };
+        /** CardSet */
+        "CardSet-Input": {
+            /** Setname */
+            setName: string;
+            /** Setcode */
+            setCode: string;
+            /** Setrarity */
+            setRarity: string;
+            /** Setraritycode */
+            setRarityCode?: string | null;
+            /** Setprice */
+            setPrice: number | string;
+            /** Setedition */
+            setEdition?: string | null;
+            /** Seturl */
+            setUrl?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** CardSet */
+        "CardSet-Output": {
+            /** Setname */
+            setName: string;
+            /** Setcode */
+            setCode: string;
+            /** Setrarity */
+            setRarity: string;
+            /** Setraritycode */
+            setRarityCode?: string | null;
+            /** Setprice */
+            setPrice: string;
+            /** Setedition */
+            setEdition?: string | null;
+            /** Seturl */
+            setUrl?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
         /** CardUpdate */
         CardUpdate: {
             /**
@@ -379,9 +590,7 @@ export interface components {
              * Sets
              * @description Sets recibidos de la fuente externa. Su estructura aún no está normalizada en campos propios.
              */
-            sets?: {
-                [key: string]: unknown;
-            } | null;
+            sets?: components["schemas"]["CardSet-Input"][] | null;
             /**
              * Cardtype
              * @description Tipo de carta informado por la fuente externa.
@@ -410,17 +619,16 @@ export interface components {
             /**
              * Prices
              * @description Precios de referencia recibidos de la fuente externa; no representan el precio definitivo de una Orden.
+             * @example 0.79
+             * @example 1
+             * @example 6.99
              */
-            prices?: {
-                [key: string]: unknown;
-            } | null;
+            prices?: components["schemas"]["CardPrice-Input"][] | null;
             /**
              * Images
              * @description Metadatos de imágenes de la fuente externa, todavía sin normalizar.
              */
-            images?: {
-                [key: string]: unknown;
-            } | null;
+            images?: components["schemas"]["CardImage"][] | null;
         };
         /** ErrorResponse */
         ErrorResponse: {
@@ -507,6 +715,64 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    searchCards: {
+        parameters: {
+            query: {
+                query: string;
+                page?: number;
+                shows?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CardSearchResponse"];
+                };
+            };
+            /** @description No existe una identidad autenticada válida. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description La identidad no posee el permiso requerido. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description La entrada no cumple el contrato de la operación. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+            /** @description Búsqueda no disponible. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     listCards: {
         parameters: {
             query?: {
@@ -628,7 +894,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CardResponse"];
+                    "application/json": components["schemas"]["CardDetailResponse"];
                 };
             };
             /** @description No existe una identidad autenticada válida. */
@@ -913,6 +1179,15 @@ export interface operations {
             query?: {
                 page?: number;
                 shows?: number;
+                cardId?: number | null;
+                ygoId?: number | null;
+                code?: string | null;
+                condition?: string | null;
+                rarity?: string | null;
+                source?: string | null;
+                isActive?: boolean;
+                orderBy?: string;
+                descending?: boolean;
             };
             header?: never;
             path?: never;

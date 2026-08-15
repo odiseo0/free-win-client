@@ -261,7 +261,7 @@ export interface paths {
         };
         /**
          * Listar permisos
-         * @description Devuelve el catálogo completo y no paginado de permisos reconocidos por el backend. Cada código expresa el recurso, la acción y, cuando aplica, el alcance propio o global.
+         * @description Devuelve la tabla compartida y no paginada de permisos. Puede incluir códigos administrados por free-win-search que este backend conserva, pero no acepta al configurar sus propios roles.
          */
         get: operations["listPermissions"];
         put?: never;
@@ -479,7 +479,7 @@ export interface paths {
         put?: never;
         /**
          * Restaurar un ítem retirado
-         * @description Reactiva un ítem retirado. En una Orden aceptada solo se permite cuando los tres componentes de precio definitivo ya están completos.
+         * @description Reactiva un ítem retirado. En una Orden aceptada solo se permite cuando los componentes unitarios de carta e impuesto ya están completos.
          */
         post: operations["restoreOrderRequestItem"];
         delete?: never;
@@ -499,7 +499,7 @@ export interface paths {
         put?: never;
         /**
          * Iniciar la revisión administrativa
-         * @description Cambia una Orden submitted a in_review. Requiere el permiso administrativo de revisión y bloquea la Orden durante toda la transición.
+         * @description Cambia una Orden submitted a in_review. Requiere el permiso administrativo de revisión, establece USD 5,00 como envío sugerido si todavía es nulo y bloquea la Orden durante toda la transición.
          */
         post: operations["startOrderRequestReview"];
         delete?: never;
@@ -519,7 +519,7 @@ export interface paths {
         put?: never;
         /**
          * Aceptar una Orden revisada
-         * @description Acepta una Orden in_review cuando conserva al menos un ítem activo y los tres componentes de precio están completos en todos ellos.
+         * @description Acepta una Orden in_review cuando conserva al menos un ítem activo y los precios de carta e impuesto están completos en todos ellos. La Orden también debe tener establecido su costo total de envío.
          */
         post: operations["acceptOrderRequest"];
         delete?: never;
@@ -588,6 +588,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/order-requests/{order_request_id}/pricing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Fijar el costo de envío de una Orden
+         * @description Sustituye el costo total de envío mientras la Orden está en revisión. El importe se suma una sola vez, independientemente del número de ítems o copias.
+         */
+        patch: operations["updateOrderRequestPricing"];
+        trace?: never;
+    };
     "/order-requests/{order_request_id}/items/{item_id}/pricing": {
         parameters: {
             query?: never;
@@ -603,7 +623,7 @@ export interface paths {
         head?: never;
         /**
          * Fijar el precio definitivo de un ítem
-         * @description Sustituye los componentes unitarios de carta, envío e impuesto. El precio unitario final y los totales se calculan en servidor; cero es válido.
+         * @description Sustituye los componentes unitarios de carta e impuesto. Si se omite el impuesto, se calcula como 16 % del precio de la carta. El envío pertenece a la Orden y no participa en este precio unitario; cero es válido.
          */
         patch: operations["updateOrderRequestItemPricing"];
         trace?: never;
@@ -925,17 +945,11 @@ export interface components {
              */
             cardUnitPrice: number | string;
             /**
-             * Shippingunitprice
-             * @description Parte del envío asignada a una copia, en USD.
-             * @example 0.75
-             */
-            shippingUnitPrice: number | string;
-            /**
              * Taxunitprice
-             * @description Parte de impuestos asignada a una copia, en USD.
-             * @example 0.28
+             * @description Parte de impuestos asignada a una copia, en USD. Si se omite, se calcula como 16 % del precio unitario de la carta.
+             * @example 0.56
              */
-            taxUnitPrice: number | string;
+            taxUnitPrice?: number | string;
         };
         /** OrderRequestItemResponse */
         OrderRequestItemResponse: {
@@ -995,13 +1009,8 @@ export interface components {
              */
             cardUnitPrice?: string | null;
             /**
-             * Shippingunitprice
-             * @description Envío unitario en USD; nulo hasta su revisión.
-             */
-            shippingUnitPrice?: string | null;
-            /**
              * Taxunitprice
-             * @description Impuesto unitario en USD; nulo hasta su revisión.
+             * @description Impuesto unitario en USD; comienza en 16 % del precio estimado y puede ajustarse durante la revisión.
              */
             taxUnitPrice?: string | null;
             /**
@@ -1057,6 +1066,15 @@ export interface components {
             items: components["schemas"]["OrderRequestResponse"][];
             /** Total */
             total: number;
+        };
+        /** OrderRequestPricingUpdate */
+        OrderRequestPricingUpdate: {
+            /**
+             * Shippingprice
+             * @description Costo total de envío de la Orden. Se aplica una sola vez, independientemente del número de ítems o copias.
+             * @example 5.00
+             */
+            shippingPrice: number | string;
         };
         /**
          * OrderRequestResponse
@@ -1116,6 +1134,11 @@ export interface components {
              */
             currency: string;
             /**
+             * Shippingprice
+             * @description Costo total de envío de la Orden. Es nulo hasta iniciar la revisión y se suma una sola vez al total acordado.
+             */
+            shippingPrice?: string | null;
+            /**
              * Cancelledat
              * @description Fecha con zona horaria de cancelación; nula si no está cancelada.
              */
@@ -1165,7 +1188,7 @@ export interface components {
          * PermissionCode
          * @enum {string}
          */
-        PermissionCode: "users.read.any" | "users.read.self" | "users.update.any" | "users.update.self" | "users.delete.any" | "users.assign_role" | "addresses.read.any" | "addresses.read.self" | "addresses.create.any" | "addresses.create.self" | "addresses.update.any" | "addresses.update.self" | "addresses.delete.any" | "addresses.delete.self" | "cards.read" | "cards.create" | "cards.update" | "cards.delete" | "card_listings.read" | "roles.read" | "roles.create" | "roles.update" | "roles.delete" | "roles.assign_permissions" | "permissions.read" | "order_periods.read" | "order_periods.read_drafts" | "order_periods.create" | "order_periods.update" | "order_periods.close" | "order_requests.read.self" | "order_requests.read.any" | "order_requests.create.self" | "order_requests.update.self" | "order_requests.update.any" | "order_requests.review";
+        PermissionCode: "users.read.any" | "users.read.self" | "users.update.any" | "users.update.self" | "users.delete.any" | "users.assign_role" | "addresses.read.any" | "addresses.read.self" | "addresses.create.any" | "addresses.create.self" | "addresses.update.any" | "addresses.update.self" | "addresses.delete.any" | "addresses.delete.self" | "roles.read" | "roles.create" | "roles.update" | "roles.delete" | "roles.assign_permissions" | "permissions.read" | "order_periods.read" | "order_periods.read_drafts" | "order_periods.create" | "order_periods.update" | "order_periods.close" | "order_requests.read.self" | "order_requests.read.any" | "order_requests.create.self" | "order_requests.update.self" | "order_requests.update.any" | "order_requests.review";
         /** PermissionResponse */
         PermissionResponse: {
             /**
@@ -1173,8 +1196,11 @@ export interface components {
              * @description Identificador interno del permiso.
              */
             id: number;
-            /** @description Código estable que expresa recurso, acción y alcance. */
-            code: components["schemas"]["PermissionCode"];
+            /**
+             * Code
+             * @description Código estable persistido en la tabla compartida. Puede pertenecer a Free Win o a otro servicio.
+             */
+            code: string;
             /**
              * Description
              * @description Explicación del permiso.
@@ -4030,6 +4056,78 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderRequestResponse"];
+                };
+            };
+            /** @description No existe una identidad autenticada válida. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description La identidad no posee el permiso requerido. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description La Orden no existe o pertenece a otro Usuario. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description La transición o sus precondiciones no son válidas. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description La entrada no cumple el contrato de la operación. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    updateOrderRequestPricing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Identificador positivo de la Orden. */
+                order_request_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrderRequestPricingUpdate"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
