@@ -8,6 +8,8 @@ if (!Number.isInteger(id) || id <= 0) return Astro.redirect('/admin/orders');
 ---
 
 <AppShell title={`Revisar orden #${id} | Free Win`}>
+	<a class="mb-6 inline-flex text-sm text-stone-400 hover:text-stone-100" href="/admin/orders">
+		← Volver a órdenes
+	</a>
 	<AdminOrderReview client:load id={id} />
 </AppShell>
-

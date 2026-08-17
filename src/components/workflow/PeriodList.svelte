@@ -15,7 +15,11 @@
 		loading = true;
 		error = '';
 		try {
-			const response = await orderPeriodsApi.list({ page: 1, shows: 100 });
+			const response = await orderPeriodsApi.list({
+				page: 1,
+				shows: 100,
+				status: admin ? undefined : 'open',
+			});
 			periods = response.items;
 		} catch (caught) {
 			error = getApiErrorMessage(caught);
@@ -35,7 +39,34 @@
 		<button class="button-secondary" on:click={load}>Intentar nuevamente</button>
 	</div>
 {:else if periods.length === 0}
-	<StateNotice message="Todavía no hay Pedidos disponibles." />
+	<StateNotice message={admin ? 'Todavía no hay Pedidos disponibles.' : 'No hay un Pedido abierto en este momento.'} />
+{:else if admin}
+	<div class="overflow-x-auto rounded-lg border border-stone-800">
+		<table class="w-full min-w-3xl border-collapse text-left text-sm">
+			<thead class="bg-stone-900 text-stone-300">
+				<tr>
+					<th class="px-4 py-3 font-semibold" scope="col">Nombre del Pedido</th>
+					<th class="px-4 py-3 font-semibold" scope="col">Estado</th>
+					<th class="px-4 py-3 font-semibold" scope="col">Fecha de apertura</th>
+					<th class="px-4 py-3 font-semibold" scope="col">Fecha de cierre</th>
+					<th class="px-4 py-3 text-right font-semibold" scope="col">Acciones</th>
+				</tr>
+			</thead>
+			<tbody class="divide-y divide-stone-800">
+				{#each periods as period}
+					<tr class="bg-stone-950 align-middle">
+						<th class="px-4 py-3 font-medium text-stone-100" scope="row">{period.name}</th>
+						<td class="px-4 py-3"><span class="status">{periodStatusLabels[period.status]}</span></td>
+						<td class="whitespace-nowrap px-4 py-3 text-stone-300">{formatDate(period.opensAt)}</td>
+						<td class="whitespace-nowrap px-4 py-3 text-stone-300">{formatDate(period.closesAt)}</td>
+						<td class="px-4 py-3 text-right">
+							<a class="button-secondary" href={`/admin/order-periods/${period.id}`}>Ver</a>
+						</td>
+					</tr>
+				{/each}
+			</tbody>
+		</table>
+	</div>
 {:else}
 	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 		{#each periods as period}
@@ -56,12 +87,11 @@
 				</dl>
 				<a
 					class="button-secondary mt-6"
-					href={admin ? `/admin/order-periods/${period.id}` : `/order-periods/${period.id}`}
+					href={`/order-periods/${period.id}`}
 				>
-					{admin ? 'Administrar Pedido' : 'Ver Pedido'}
+					Ver Pedido
 				</a>
 			</article>
 		{/each}
 	</div>
 {/if}
-

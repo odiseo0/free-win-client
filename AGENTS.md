@@ -58,6 +58,10 @@ request field, enum, endpoint, or state transition from the UI alone.
   Prefer reusable semantic component patterns over one-off, repeated utility groups.
 - Design mobile-first and make status, price, quantity, and validation information
   readable without relying on color alone.
+- On detail, creation, and editing pages, show a visible link near the page heading
+  that returns to the previous parent page when a parent exists. Use a normal URL
+  instead of browser-history JavaScript, and preserve useful query context when
+  possible.
 - Keep external API URLs configurable rather than scattering local service addresses
   through components. The development defaults are backend `127.0.0.1:8000` and
   search `127.0.0.1:8001`.

@@ -4,12 +4,11 @@ import PeriodList from '../../components/workflow/PeriodList.svelte';
 import '../../styles/global.css';
 ---
 
-<AppShell title="Pedidos | Free Win">
+<AppShell title="Pedido actual | Free Win">
 	<header class="mb-8">
 		<p class="text-sm font-semibold uppercase tracking-widest text-amber-400">Participar</p>
-		<h1 class="page-heading mt-2">Pedidos</h1>
-		<p class="page-intro">Consulta las ventanas de compra y abre un Pedido disponible para preparar tu orden.</p>
+		<h1 class="page-heading mt-2">Pedido actual</h1>
+		<p class="page-intro">Consulta el Pedido abierto y prepara tu orden.</p>
 	</header>
 	<PeriodList client:load />
 </AppShell>
-

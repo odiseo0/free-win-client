@@ -2,31 +2,24 @@
 	import { onMount } from 'svelte';
 	import { getApiErrorMessage } from '../../lib/api/client';
 	import { orderRequestsApi } from '../../lib/api/workflow';
-	import type { OrderRequest, OrderRequestHistory } from '../../lib/api/types';
-	import { canEditParticipantOrder, formatDate, formatMoney, isValidRequestedQuantity, orderEventLabels, orderStatusLabels } from '../../lib/workflow';
+	import type { OrderRequest } from '../../lib/api/types';
+	import { canEditParticipantOrder, formatDate, formatMoney, isValidRequestedQuantity, orderStatusLabels } from '../../lib/workflow';
 	import StateNotice from '../ui/StateNotice.svelte';
 
 	export let id: number;
 	let order: OrderRequest | null = null;
-	let history: OrderRequestHistory[] = [];
 	let loading = true;
 	let saving = false;
 	let loadError = '';
 	let mutationError = '';
-	let note = '';
 	let quantities: Record<number, number> = {};
 
 	async function refresh() {
-		const [nextOrder, nextHistory] = await Promise.all([
-			orderRequestsApi.get(id),
-			orderRequestsApi.history(id, { page: 1, shows: 100 }),
-		]);
+		const nextOrder = await orderRequestsApi.get(id);
 		order = nextOrder;
-		note = nextOrder.note ?? '';
 		quantities = Object.fromEntries(
 			nextOrder.items.map((item) => [item.id, item.requestedQuantity]),
 		);
-		history = [...nextHistory].sort((a, b) => b.occurredAt.localeCompare(a.occurredAt));
 	}
 
 	async function load() {
@@ -37,20 +30,6 @@
 			loadError = getApiErrorMessage(caught);
 		} finally {
 			loading = false;
-		}
-	}
-
-	async function saveNote() {
-		if (!order) return;
-		saving = true;
-		mutationError = '';
-		try {
-			await orderRequestsApi.updateNote(order.id, { note: note.trim() || null });
-			await refresh();
-		} catch (caught) {
-			mutationError = getApiErrorMessage(caught);
-		} finally {
-			saving = false;
 		}
 	}
 
@@ -86,7 +65,7 @@
 		<div class="flex flex-wrap items-start justify-between gap-4">
 			<div>
 				<p class="text-sm text-stone-500">Pedido #{order.orderPeriodId}</p>
-				<h1 class="mt-1 text-2xl font-bold text-white">Orden #{order.id}</h1>
+				<h1 class="mt-1 text-2xl font-bold text-white">Estado de la orden</h1>
 				<p class="mt-2 text-sm text-stone-400">Enviada el {formatDate(order.dateAdded)}</p>
 			</div>
 			<div class="text-right">
@@ -103,53 +82,45 @@
 
 	<section class="panel mt-6">
 		<h2 class="text-lg font-semibold text-white">Cartas solicitadas</h2>
-		<div class="mt-4 divide-y divide-stone-800">
-			{#each order.items as item}
-				<article class:opacity-50={Boolean(item.removedAt)} class="py-5 first:pt-0 last:pb-0">
-					<div class="flex flex-col justify-between gap-4 sm:flex-row">
-						<div>
-							<h3 class="font-medium text-white">{item.cardName}</h3>
-							<p class="mt-1 text-sm text-stone-400">{item.cardCode} · {item.rarity} · {item.condition}</p>
-							<p class="mt-2 text-sm text-stone-300">Estimado: {formatMoney(item.estimatedUnitPrice, order.currency)}</p>
-						</div>
-						<dl class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:text-right">
-							<div><dt class="text-stone-500">Acordada</dt><dd>{item.agreedQuantity}</dd></div>
-							<div><dt class="text-stone-500">Precio final</dt><dd>{formatMoney(item.finalUnitPrice, order.currency)}</dd></div>
-							<div class="col-span-2"><dt class="text-stone-500">Total</dt><dd class="font-semibold">{formatMoney(item.agreedTotal, order.currency)}</dd></div>
-						</dl>
-					</div>
-					{#if canEditParticipantOrder(order) && !item.removedAt}
-						<div class="mt-4 flex max-w-xs items-end gap-2">
-							<label class="flex-1"><span class="label">Cantidad solicitada</span><input class="field" type="number" min="1" bind:value={quantities[item.id]} /></label>
-							<button class="button-secondary" disabled={saving} on:click={() => saveQuantity(item.id)}>Guardar</button>
-						</div>
-					{/if}
-				</article>
-			{/each}
+		<div class="mt-4 overflow-x-auto rounded-lg border border-stone-800">
+			<table class="w-full min-w-3xl border-collapse text-left text-sm">
+				<thead class="bg-stone-900 text-stone-300">
+					<tr>
+						<th class="px-4 py-3 font-semibold" scope="col">Carta</th>
+						<th class="px-4 py-3 font-semibold" scope="col">Cantidad</th>
+						<th class="px-4 py-3 text-right font-semibold" scope="col">Precio estimado</th>
+						<th class="px-4 py-3 text-right font-semibold" scope="col">Total estimado</th>
+					</tr>
+				</thead>
+				<tbody class="divide-y divide-stone-800">
+					{#each order.items as item}
+						<tr class:opacity-50={Boolean(item.removedAt)} class="bg-stone-950 align-middle">
+							<th class="px-4 py-3 font-medium text-stone-100" scope="row">
+								{item.cardName}
+								<span class="mt-1 block font-normal text-stone-400">{item.cardCode} · {item.rarity} · {item.condition}</span>
+							</th>
+							<td class="px-4 py-3">
+								{#if canEditParticipantOrder(order) && !item.removedAt}
+									<div class="flex min-w-44 items-center gap-2">
+										<label class="sr-only" for={`quantity-${item.id}`}>Cantidad de {item.cardName}</label>
+										<input id={`quantity-${item.id}`} class="field w-20" type="number" min="1" bind:value={quantities[item.id]} />
+										<button class="button-secondary" disabled={saving} on:click={() => saveQuantity(item.id)}>Guardar</button>
+									</div>
+								{:else}
+									{item.requestedQuantity}
+								{/if}
+							</td>
+							<td class="whitespace-nowrap px-4 py-3 text-right text-stone-300">{formatMoney(item.estimatedUnitPrice, order.currency)}</td>
+							<td
+								class="whitespace-nowrap px-4 py-3 text-right font-medium text-stone-100"
+								title={`${formatMoney(item.estimatedUnitPrice, order.currency)} × ${quantities[item.id] ?? item.requestedQuantity} = ${formatMoney(Number(item.estimatedUnitPrice) * (quantities[item.id] ?? item.requestedQuantity), order.currency)}`}
+							>
+								<span class="cursor-help border-b border-dotted border-stone-600">{formatMoney(Number(item.estimatedUnitPrice) * (quantities[item.id] ?? item.requestedQuantity), order.currency)}</span>
+							</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
 		</div>
-	</section>
-
-	<section class="panel mt-6">
-		<h2 class="text-lg font-semibold text-white">Nota compartida</h2>
-		<textarea class="field mt-4 min-h-28" maxlength="2000" bind:value={note} disabled={!canEditParticipantOrder(order)} placeholder="Sin nota"></textarea>
-		{#if canEditParticipantOrder(order)}
-			<button class="button-secondary mt-3" disabled={saving} on:click={saveNote}>Guardar nota</button>
-		{/if}
-	</section>
-
-	<section class="panel mt-6">
-		<h2 class="text-lg font-semibold text-white">Historial</h2>
-		{#if history.length === 0}
-			<p class="mt-3 text-sm text-stone-500">No hay eventos registrados.</p>
-		{:else}
-			<ol class="mt-4 space-y-3">
-				{#each history as event}
-					<li class="border-l-2 border-stone-700 pl-4 text-sm">
-						<p class="font-medium text-stone-200">{orderEventLabels[event.event]}</p>
-						<p class="mt-1 text-stone-500">{formatDate(event.occurredAt)} · Usuario #{event.actorUserId}</p>
-					</li>
-				{/each}
-			</ol>
-		{/if}
 	</section>
 {/if}

@@ -4,7 +4,6 @@
 	import { orderRequestsApi } from '../../lib/api/workflow';
 	import type {
 		OrderRequest,
-		OrderRequestHistory,
 		OrderRequestItemPricingUpdate,
 	} from '../../lib/api/types';
 	import {
@@ -15,10 +14,8 @@
 		canAcceptOrder,
 		canStartReview,
 		DEFAULT_SHIPPING_PRICE,
-		formatDate,
 		formatMoney,
 		isValidAgreedQuantity,
-		orderEventLabels,
 		orderStatusLabels,
 	} from '../../lib/workflow';
 	import StateNotice from '../ui/StateNotice.svelte';
@@ -28,11 +25,9 @@
 		agreedQuantity: number;
 		cardUnitPrice: string;
 		taxUnitPrice: string;
-		taxIsAutomatic: boolean;
 	};
 
 	let order: OrderRequest | null = null;
-	let history: OrderRequestHistory[] = [];
 	let drafts: Record<number, ReviewDraft> = {};
 	let shippingPrice = DEFAULT_SHIPPING_PRICE;
 	let loading = true;
@@ -49,8 +44,6 @@
 				agreedQuantity: item.agreedQuantity,
 				cardUnitPrice,
 				taxUnitPrice: item.taxUnitPrice ?? defaultTaxUnitPrice,
-				taxIsAutomatic:
-					item.taxUnitPrice == null || item.taxUnitPrice === defaultTaxUnitPrice,
 			}];
 		}));
 	}
@@ -74,32 +67,32 @@
 		);
 	}
 
+	function getItemTotalCalculation(
+		item: OrderRequest['items'][number],
+		draft: ReviewDraft | undefined,
+		currency: string,
+	): string | undefined {
+		const cardUnitPrice = draft?.cardUnitPrice ?? item.cardUnitPrice;
+		const taxUnitPrice = draft?.taxUnitPrice ?? item.taxUnitPrice;
+		const agreedQuantity = draft?.agreedQuantity ?? item.agreedQuantity;
+		if (cardUnitPrice == null || taxUnitPrice == null) return undefined;
+		const calculation = calculateItemPricingPreview(cardUnitPrice, taxUnitPrice, agreedQuantity);
+		if (!calculation) return undefined;
+		return `(${formatMoney(calculation.cardUnitPrice, currency)} de carta + ${formatMoney(calculation.taxUnitPrice, currency)} de impuesto) × ${agreedQuantity} = ${formatMoney(calculation.agreedTotal, currency)}`;
+	}
+
 	function updateCardUnitPrice(itemId: number, event: Event) {
 		const draft = drafts[itemId];
 		if (!draft) return;
 		draft.cardUnitPrice = (event.currentTarget as HTMLInputElement).value;
-		if (draft.taxIsAutomatic) {
-			draft.taxUnitPrice = calculateDefaultTaxUnitPrice(draft.cardUnitPrice);
-		}
-		drafts = { ...drafts };
-	}
-
-	function updateTaxUnitPrice(itemId: number, event: Event) {
-		const draft = drafts[itemId];
-		if (!draft) return;
-		draft.taxUnitPrice = (event.currentTarget as HTMLInputElement).value;
-		draft.taxIsAutomatic = false;
+		draft.taxUnitPrice = calculateDefaultTaxUnitPrice(draft.cardUnitPrice);
 		drafts = { ...drafts };
 	}
 
 	async function refresh() {
-		const [nextOrder, nextHistory] = await Promise.all([
-			orderRequestsApi.get(id),
-			orderRequestsApi.history(id, { page: 1, shows: 100 }),
-		]);
+		const nextOrder = await orderRequestsApi.get(id);
 		order = nextOrder;
 		syncDrafts(nextOrder);
-		history = [...nextHistory].sort((a, b) => b.occurredAt.localeCompare(a.occurredAt));
 	}
 
 	async function load() {
@@ -119,8 +112,8 @@
 		try {
 			for (const action of actions) {
 				await action();
-				await refresh();
 			}
+			await refresh();
 		} catch (caught) {
 			actionError = getApiErrorMessage(caught);
 			try {
@@ -155,7 +148,6 @@
 		const pricing: OrderRequestItemPricingUpdate = {
 			cardUnitPrice: draft.cardUnitPrice,
 		};
-		if (!draft.taxIsAutomatic) pricing.taxUnitPrice = draft.taxUnitPrice;
 
 		await mutate([
 			() => orderRequestsApi.updateItem(order!.id, itemId, {
@@ -197,13 +189,33 @@
 			</div>
 			<div class="text-right">
 				<span class="status">{orderStatusLabels[order.status]}</span>
-				<p class="mt-3 text-xl font-bold text-white">{formatMoney(orderPreview?.agreedTotal ?? order.agreedTotal, order.currency)}</p>
 				<a class="button-secondary mt-4" href={`/orders/${order.id}`}>
 					Ver como participante
 				</a>
 			</div>
 		</div>
 		{#if order.note}<p class="mt-5 rounded-xl bg-stone-950 p-4 text-sm text-stone-300">{order.note}</p>{/if}
+
+		{#if order.status === 'in_review'}
+			<div class="mt-6 rounded-xl border border-stone-800 bg-stone-950 p-4">
+				<div>
+					<h2 class="font-semibold text-white">Costos de la Orden</h2>
+					<p class="mt-1 text-sm text-stone-400">El envío se aplica una sola vez, sin importar cuántas cartas o copias contiene la Orden.</p>
+				</div>
+				{#if orderPreview}
+					<dl class="mt-5 grid grid-cols-2 items-end gap-4 text-sm lg:grid-cols-4" aria-live="polite">
+						<div><dt class="text-stone-500">Cartas</dt><dd class="mt-1 font-medium text-white">{formatMoney(orderPreview.cardSubtotal, order.currency)}</dd></div>
+						<div><dt class="text-stone-500">Impuestos</dt><dd class="mt-1 font-medium text-white">{formatMoney(orderPreview.taxTotal, order.currency)}</dd></div>
+						<div>
+							<dt><label class="text-stone-500" for="shipping-price">Envío (USD)</label></dt>
+							<dd class="mt-1"><input id="shipping-price" class="field max-w-40" type="number" min="0" step="0.01" bind:value={shippingPrice} disabled={saving} on:change={saveShippingPrice} /></dd>
+						</div>
+						<div><dt class="text-stone-500">Total estimado</dt><dd class="mt-1 font-semibold text-white">{formatMoney(orderPreview.agreedTotal, order.currency)}</dd></div>
+					</dl>
+				{/if}
+			</div>
+		{/if}
+
 		<div class="mt-6 flex flex-wrap gap-3">
 			{#if canStartReview(order)}
 				<button class="button" disabled={saving} on:click={() => mutate([() => orderRequestsApi.startReview(order!.id)])}>Iniciar revisión</button>
@@ -223,91 +235,59 @@
 				>Aceptar orden</button>
 			{/if}
 		</div>
-
-		{#if order.status === 'in_review'}
-			<div class="mt-6 rounded-xl border border-stone-800 bg-stone-950 p-4">
-				<div class="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
-					<div>
-						<h2 class="font-semibold text-white">Costos de la Orden</h2>
-						<p class="mt-1 text-sm text-stone-400">El envío se aplica una sola vez, sin importar cuántas cartas o copias contiene la Orden.</p>
-					</div>
-					<div class="flex w-full flex-col gap-2 sm:flex-row lg:w-auto lg:items-end">
-						<label class="min-w-56 flex-1">
-							<span class="label">Envío total (USD)</span>
-							<input class="field" type="number" min="0" step="0.01" bind:value={shippingPrice} />
-						</label>
-						<button class="button-secondary" disabled={saving} on:click={saveShippingPrice}>Guardar envío</button>
-					</div>
-				</div>
-				{#if orderPreview}
-					<dl class="mt-5 grid grid-cols-2 gap-4 text-sm lg:grid-cols-4" aria-live="polite">
-						<div><dt class="text-stone-500">Cartas</dt><dd class="mt-1 font-medium text-white">{formatMoney(orderPreview.cardSubtotal, order.currency)}</dd></div>
-						<div><dt class="text-stone-500">Impuestos</dt><dd class="mt-1 font-medium text-white">{formatMoney(orderPreview.taxTotal, order.currency)}</dd></div>
-						<div><dt class="text-stone-500">Envío</dt><dd class="mt-1 font-medium text-white">{formatMoney(orderPreview.shippingPrice, order.currency)}</dd></div>
-						<div><dt class="text-stone-500">Total estimado</dt><dd class="mt-1 font-semibold text-white">{formatMoney(orderPreview.agreedTotal, order.currency)}</dd></div>
-					</dl>
-				{/if}
-			</div>
-		{/if}
 	</section>
 
 	{#if actionError}<p class="mt-5 rounded-lg bg-red-950/50 p-3 text-sm text-red-300" role="alert">{actionError}</p>{/if}
 
-	<section class="mt-6 space-y-4">
-		{#each order.items as item}
-			{@const draft = drafts[item.id]}
-			{@const preview = order.status === 'in_review' && !item.removedAt && draft ? calculateItemPricingPreview(draft.cardUnitPrice, draft.taxUnitPrice, draft.agreedQuantity) : null}
-			<article class:opacity-50={Boolean(item.removedAt)} class="panel">
-				<div class="flex flex-col justify-between gap-3 sm:flex-row">
-					<div>
-						<h2 class="font-semibold text-white">{item.cardName}</h2>
-						<p class="mt-1 text-sm text-stone-400">{item.cardCode} · {item.rarity} · {item.condition}</p>
-						<p class="mt-1 text-sm text-stone-400">Solicitada: {item.requestedQuantity} · Estimado: {formatMoney(item.estimatedUnitPrice, order.currency)}</p>
-					</div>
-					<div class="text-sm sm:text-right">
-						<p class="text-stone-500">Total calculado</p>
-						<p class="mt-1 font-semibold text-white">{formatMoney(preview?.agreedTotal ?? item.agreedTotal, order.currency)}</p>
-					</div>
-				</div>
-				{#if order.status === 'in_review' && !item.removedAt}
-					<p class="mt-5 text-sm text-stone-400">El precio estimado se usa como punto de partida. El impuesto sugerido es el 16% por copia y puedes ajustarlo.</p>
-					<div class="mt-5 grid gap-4 sm:grid-cols-3">
-						<label><span class="label">Cantidad acordada</span><input class="field" type="number" min="0" max={item.requestedQuantity} bind:value={drafts[item.id].agreedQuantity} /></label>
-						<label><span class="label">Carta por copia (USD)</span><input class="field" type="number" min="0" step="0.01" value={drafts[item.id].cardUnitPrice} on:input={(event) => updateCardUnitPrice(item.id, event)} /></label>
-						<label><span class="label">Impuesto por copia (USD)</span><input class="field" type="number" min="0" step="0.01" value={drafts[item.id].taxUnitPrice} on:input={(event) => updateTaxUnitPrice(item.id, event)} /></label>
-					</div>
-					{#if preview}
-						<div class="mt-4 rounded-xl border border-stone-800 bg-stone-950 p-4 text-sm" aria-live="polite">
-							<p class="font-medium text-white">Cálculo estimado</p>
-							<p class="mt-2 text-stone-300">
-								Por copia: {formatMoney(preview.cardUnitPrice, order.currency)} de carta + {formatMoney(preview.taxUnitPrice, order.currency)} de impuesto = <strong class="text-white">{formatMoney(preview.finalUnitPrice, order.currency)}</strong>
-							</p>
-							<p class="mt-1 text-stone-300">
-								Total del ítem: {formatMoney(preview.finalUnitPrice, order.currency)} × {draft.agreedQuantity} {draft.agreedQuantity === 1 ? 'copia' : 'copias'} = <strong class="text-white">{formatMoney(preview.agreedTotal, order.currency)}</strong>
-							</p>
-						</div>
-					{/if}
-					<button class="button-secondary mt-4" disabled={saving} on:click={() => saveItem(item.id)}>Guardar revisión del ítem</button>
-				{:else}
-					<dl class="mt-5 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
-						<div><dt class="text-stone-500">Acordada</dt><dd>{item.agreedQuantity}</dd></div>
-						<div><dt class="text-stone-500">Carta</dt><dd>{formatMoney(item.cardUnitPrice, order.currency)}</dd></div>
-						<div><dt class="text-stone-500">Impuesto</dt><dd>{formatMoney(item.taxUnitPrice, order.currency)}</dd></div>
-					</dl>
-				{/if}
-			</article>
-		{/each}
+	<section class="panel mt-6">
+		<div class="flex flex-wrap items-baseline justify-between gap-3">
+			<h2 class="text-lg font-semibold text-white">Cartas de la orden</h2>
+			{#if saving}<p class="text-sm text-stone-400" aria-live="polite">Guardando cambios…</p>{/if}
+		</div>
+		{#if order.status === 'in_review'}
+			<p class="mt-2 text-sm text-stone-400">Los cambios se guardan al salir de cada campo. El impuesto se calcula como 16 % del precio de la carta.</p>
+		{/if}
+		<div class="mt-4 overflow-x-auto rounded-lg border border-stone-800">
+			<table class="w-full min-w-5xl border-collapse text-left text-sm">
+				<thead class="bg-stone-900 text-stone-300">
+					<tr>
+						<th class="px-3 py-3 font-semibold" scope="col">Carta</th>
+						<th class="px-3 py-3 text-right font-semibold" scope="col">Solicitada</th>
+						<th class="px-3 py-3 font-semibold" scope="col">Acordada</th>
+						<th class="px-3 py-3 font-semibold" scope="col">Carta por copia</th>
+						<th class="px-3 py-3 text-right font-semibold" scope="col">Total por copia</th>
+						<th class="px-3 py-3 text-right font-semibold" scope="col">Total</th>
+					</tr>
+				</thead>
+				<tbody class="divide-y divide-stone-800">
+					{#each order.items as item}
+						{@const draft = drafts[item.id]}
+						{@const preview = order.status === 'in_review' && !item.removedAt && draft ? calculateItemPricingPreview(draft.cardUnitPrice, draft.taxUnitPrice, draft.agreedQuantity) : null}
+						<tr class:opacity-50={Boolean(item.removedAt)} class="bg-stone-950 align-middle">
+							<th class="px-3 py-3 font-medium text-stone-100" scope="row">
+								{item.cardName}
+								<span class="mt-1 block font-normal text-stone-400">{item.cardCode} · {item.rarity} · {item.condition}</span>
+							</th>
+							<td class="px-3 py-3 text-right text-stone-300">{item.requestedQuantity}</td>
+							{#if order.status === 'in_review' && !item.removedAt}
+								<td class="px-3 py-3"><label class="sr-only" for={`agreed-${item.id}`}>Cantidad acordada de {item.cardName}</label><input id={`agreed-${item.id}`} class="field w-24" type="number" min="0" max={item.requestedQuantity} bind:value={drafts[item.id].agreedQuantity} disabled={saving} on:change={() => saveItem(item.id)} /></td>
+								<td class="px-3 py-3"><label class="sr-only" for={`card-price-${item.id}`}>Precio por copia de {item.cardName}</label><input id={`card-price-${item.id}`} class="field w-28" type="number" min="0" step="0.01" value={drafts[item.id].cardUnitPrice} disabled={saving} on:input={(event) => updateCardUnitPrice(item.id, event)} on:change={() => saveItem(item.id)} /></td>
+							{:else}
+								<td class="px-3 py-3 text-stone-300">{item.agreedQuantity}</td>
+								<td class="px-3 py-3 text-stone-300">{formatMoney(item.cardUnitPrice, order.currency)}</td>
+							{/if}
+							<td class="whitespace-nowrap px-3 py-3 text-right text-stone-300">{formatMoney(preview?.finalUnitPrice ?? item.finalUnitPrice, order.currency)}</td>
+							<td
+								class="whitespace-nowrap px-3 py-3 text-right font-medium text-stone-100"
+								title={getItemTotalCalculation(item, draft, order.currency)}
+							>
+								<span class="cursor-help border-b border-dotted border-stone-600">{formatMoney(preview?.agreedTotal ?? item.agreedTotal, order.currency)}</span>
+							</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
 	</section>
 
-	<section class="panel mt-6">
-		<h2 class="text-lg font-semibold text-white">Historial</h2>
-		<ol class="mt-4 space-y-3">
-			{#each history as event}
-				<li class="border-l-2 border-stone-700 pl-4 text-sm">
-					<p class="font-medium text-stone-200">{orderEventLabels[event.event]}</p>
-					<p class="mt-1 text-stone-500">{formatDate(event.occurredAt)} · Usuario #{event.actorUserId}</p>
-				</li>
-			{/each}
-		</ol>
-	</section>
 {/if}

@@ -8,6 +8,8 @@ if (!Number.isInteger(id) || id <= 0) return Astro.redirect('/order-periods');
 ---
 
 <AppShell title={`Pedido #${id} | Free Win`}>
+	<a class="mb-6 inline-flex text-sm text-stone-400 hover:text-stone-100" href="/order-periods">
+		← Volver al Pedido actual
+	</a>
 	<PeriodDetail client:load id={id} />
 </AppShell>
-
