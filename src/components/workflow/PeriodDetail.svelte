@@ -3,13 +3,12 @@
 	import { getApiErrorMessage } from '../../lib/api/client';
 	import { CardSearchJobError, CardSearchTimeoutError, searchCardListingsUntilReady } from '../../lib/api/search';
 	import { orderPeriodsApi, orderRequestsApi } from '../../lib/api/workflow';
-	import type { CardListing, OrderPeriod, OrderPeriodHistory, OrderRequest, ScrapeJobStatus } from '../../lib/api/types';
+	import type { CardListing, OrderPeriod, OrderRequest, ScrapeJobStatus } from '../../lib/api/types';
 	import { formatDate, formatMoney, isListingSelectable, isValidRequestedQuantity, periodStatusLabels } from '../../lib/workflow';
 	import StateNotice from '../ui/StateNotice.svelte';
 
 	export let id: number;
 	let period: OrderPeriod | null = null;
-	let history: OrderPeriodHistory[] = [];
 	let order: OrderRequest | null = null;
 	let orderStarted = false;
 	let loading = true;
@@ -38,13 +37,11 @@
 
 	async function load() {
 		try {
-			const [nextPeriod, nextHistory, orderResponse] = await Promise.all([
+			const [nextPeriod, orderResponse] = await Promise.all([
 				orderPeriodsApi.get(id),
-				orderPeriodsApi.history(id, { page: 1, shows: 100 }),
 				orderRequestsApi.list({ page: 1, shows: 100, orderPeriodId: id }),
 			]);
 			period = nextPeriod;
-			history = [...nextHistory].sort((a, b) => b.occurredAt.localeCompare(a.occurredAt));
 			const editableOrder = orderResponse.items.find((candidate) => candidate.status === 'submitted');
 			if (editableOrder) syncOrder(editableOrder);
 		} catch (caught) {
@@ -237,11 +234,4 @@
 	{:else}
 		<div class="mt-6"><StateNotice message="Este Pedido no está abierto para recibir órdenes." /></div>
 	{/if}
-
-	<section class="panel mt-6">
-		<h2 class="text-lg font-semibold text-white">Historial del Pedido</h2>
-		{#if history.length === 0}<p class="mt-3 text-sm text-stone-500">No hay eventos registrados.</p>{:else}
-			<ol class="mt-4 space-y-3">{#each history as event}<li class="border-l-2 border-stone-700 pl-4 text-sm"><p class="font-medium text-stone-200">{event.event === 'created' ? 'Pedido creado' : event.event === 'updated' ? 'Pedido actualizado' : 'Pedido cerrado antes de tiempo'}</p><p class="mt-1 text-stone-500">{formatDate(event.occurredAt)} · Usuario #{event.actorUserId}</p></li>{/each}</ol>
-		{/if}
-	</section>
 {/if}
