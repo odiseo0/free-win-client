@@ -1,0 +1,9 @@
+---
+import AppShell from '../components/layout/AppShell.astro';
+import AccountForm from '../components/account/AccountForm.svelte';
+import '../styles/global.css';
+---
+<AppShell title="Cuenta | Free Win" description="Crea una cuenta de Free Win.">
+	<header><p class="route-label">CUENTA</p><h1 class="page-heading">Entra a Free Win.</h1><p class="page-intro">Crea una cuenta para participar en los Pedidos de la comunidad.</p></header>
+	<AccountForm client:load />
+</AppShell>

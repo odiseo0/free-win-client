@@ -4,6 +4,10 @@ import type { components as SearchComponents } from './search.generated';
 type BackendSchema = BackendComponents['schemas'];
 type SearchSchema = SearchComponents['schemas'];
 
+// Use the corrected backend contract shape while the local generated contract is refreshed.
+export interface UserCreate { name: string; email: string; password: string; }
+export type User = BackendSchema['UserResponse'];
+
 export type CardListing = SearchSchema['CardListingResponse'];
 export type CardListingList = SearchSchema['CardListingListResponse'];
 export type ScrapeAccepted = SearchSchema['ScrapeAcceptedResponse'];

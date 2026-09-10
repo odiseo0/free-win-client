@@ -1,38 +1,15 @@
 ---
-import AppShell from '../components/layout/AppShell.astro';
 import '../styles/global.css';
-
-const workflowSteps = [
-	['1', 'Pedido abierto', 'La comunidad encuentra una compra disponible.'],
-	['2', 'Orden enviada', 'Cada participante añade las cartas que necesita.'],
-	['3', 'Revisión', 'Se confirma cantidad, precio, envío e impuestos.'],
-	['4', 'Pedido cerrado', 'Las órdenes quedan registradas para seguimiento.'],
-];
 ---
-
-<AppShell title="Free Win">
-	<section class="overflow-hidden rounded-3xl border border-stone-800 bg-gradient-to-br from-stone-900 to-stone-950 p-6 sm:p-10 lg:p-14">
-		<p class="text-sm font-semibold uppercase tracking-widest text-amber-400">Pedidos para la comunidad</p>
-		<h1 class="mt-3 text-3xl font-bold tracking-tight text-white sm:text-5xl">Free Win</h1>
-		<p class="mt-4 max-w-2xl text-base leading-7 text-stone-300">
-			Un espacio comunitario para coordinar Pedidos de cartas Yu-Gi-Oh!.
-		</p>
-		<div class="mt-7 flex flex-wrap gap-3">
-			<a class="button" href="/order-periods">Ver Pedidos</a>
-			<a class="button-secondary" href="/admin/order-periods">Organizar un Pedido</a>
-		</div>
-	</section>
-
-	<section class="mt-8" aria-labelledby="workflow-title">
-		<h2 id="workflow-title" class="text-xl font-semibold text-white">Cómo funciona</h2>
-		<ol class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-			{workflowSteps.map(([number, title, description]) => (
-				<li class="rounded-xl border border-stone-800 bg-stone-900/60 p-5">
-					<p class="text-sm font-semibold text-amber-400">Paso {number}</p>
-					<h3 class="mt-2 font-medium text-white">{title}</h3>
-					<p class="mt-2 text-sm leading-6 text-stone-400">{description}</p>
-				</li>
-			))}
-		</ol>
-	</section>
-</AppShell>
+<!doctype html><html lang="es"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width"/><meta name="description" content="Free Win te ayuda a comprar cartas y productos sellados de Yu-Gi-Oh! fuera de Venezuela y recibirlos en el país."/><meta name="theme-color" content="#FFF8F0"/><link rel="icon" href="/favicon.svg"/><link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600&family=Roboto:wght@400;500&display=swap" rel="stylesheet"/><title>Free Win — Cartas de Yu-Gi-Oh! en Venezuela</title></head><body>
+<a class="skip-link" href="#contenido">Ir al contenido</a><header class="site-header landing-header" data-header><a class="brand" href="#inicio" aria-label="Free Win, inicio">FREE WIN</a><button class="menu-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="site-menu" data-menu-toggle><span aria-hidden="true">•••</span></button><nav class="site-nav" id="site-menu" aria-label="Navegación principal" data-menu><a href="#como-funciona">Cómo funciona</a><a href="#preguntas">Preguntas</a><a href="/account">Unirme</a></nav></header>
+<main id="contenido"><section class="hero" id="inicio" aria-labelledby="hero-title"><div><h1 id="hero-title">Pide cartas fuera de Venezuela.</h1><p class="hero-intro">Te ayudamos a comprar cartas sueltas y productos sellados en tiendas del exterior, y a recibirlos en cualquier parte del país.</p><a class="primary-action hero-action" href="/account">Quiero unirme</a></div><figure class="hero-visual"><img src="/assets/hero-yugi-pair-final.png" alt="Yugi y el Faraón en una ilustración con trama de semitonos." width="1122" height="1402" fetchpriority="high"/></figure></section>
+<section class="process" id="como-funciona" aria-labelledby="process-title"><div class="section-copy"><h2 id="process-title">Tres pasos. Sin vueltas.</h2><p>Tú eliges lo que buscas. Free Win te acompaña desde la compra hasta la entrega en Venezuela.</p></div><ol class="steps"><li><div><strong>01</strong><span>PEDIR</span></div><section><h3>Dinos qué buscas.</h3><p>Comparte las cartas sueltas o los productos sellados que quieres comprar.</p></section></li><li><div><strong>02</strong><span>COMPRAR</span></div><section><h3>Te ayudamos a comprar.</h3><p>Revisamos tu pedido contigo antes de hacer la compra en el exterior.</p></section></li><li><div><strong>03</strong><span>RECIBIR</span></div><section><h3>Recíbelo en Venezuela.</h3><p>Coordinamos la entrega de tu pedido en cualquier parte del país.</p></section></li></ol></section>
+<section class="faq" id="preguntas" aria-labelledby="faq-title"><h2 id="faq-title">Lo que debes saber.</h2><div><details><summary><span>¿Qué puedo pedir?</span><span aria-hidden="true">+</span></summary><p>Puedes pedir cartas sueltas y productos sellados, como sobres, cajas, latas y mazos.</p></details><details><summary><span>¿Entregan en todo el país?</span><span aria-hidden="true">+</span></summary><p>Sí. Free Win coordina entregas en toda Venezuela.</p></details><details><summary><span>¿Cuánto tarda un pedido?</span><span aria-hidden="true">+</span></summary><p>El tiempo depende de la tienda, la disponibilidad y el traslado. Confirmamos los datos antes de cada compra.</p></details><details><summary><span>¿Cómo empiezo?</span><span aria-hidden="true">+</span></summary><p>Puedes crear tu cuenta desde esta página. Luego podrás consultar los Pedidos abiertos.</p></details></div></section>
+<section class="final-signup"><h2>Encuentra lo que quieres jugar.</h2><a class="primary-action" href="/account">Quiero unirme</a></section></main><footer class="landing-footer"><img src="/assets/kaiba-footer.png" alt="" width="1254" height="1254" loading="lazy"/><div><p>FREE WIN / COMUNIDAD DE YU-GI-OH!</p><p>VENEZUELA</p></div></footer>
+<script is:inline>const h=document.querySelector('[data-header]'),b=h?.querySelector('[data-menu-toggle]'),m=h?.querySelector('[data-menu]');const o=x=>{b.setAttribute('aria-expanded',String(x));b.setAttribute('aria-label',x?'Cerrar menú':'Abrir menú');m.dataset.open=String(x)};b?.addEventListener('click',()=>o(b.getAttribute('aria-expanded')!=='true'));m?.addEventListener('click',e=>{if(e.target.closest('a'))o(false)});document.addEventListener('click',e=>{if(b?.getAttribute('aria-expanded')==='true'&&!e.target.closest('[data-header]'))o(false)});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&b?.getAttribute('aria-expanded')==='true'){o(false);b.focus()}});matchMedia('(min-width:58.001rem)').addEventListener('change',e=>{if(e.matches)o(false)});</script>
+</body></html>
+<style>
+.hero{display:grid;min-height:100svh;grid-template-columns:minmax(0,1fr) minmax(20rem,.76fr);gap:clamp(2rem,5vw,7rem);align-items:center;padding:clamp(7.5rem,12vh,10rem) var(--page-pad) clamp(4rem,8vh,7rem)}h1,h2,h3{margin:0;font-family:var(--display);font-weight:600;line-height:.94}.hero h1{max-width:9ch;font-size:clamp(4rem,8vw,8.75rem)}.hero-intro{max-width:34rem;margin:clamp(2rem,4vw,3.75rem) 0 2.5rem;font-size:clamp(1.0625rem,1.45vw,1.3rem)}.hero-visual{width:min(46vw,72vh,44rem);aspect-ratio:4/5}.hero-visual img{width:100%;height:100%;object-fit:contain}.process,.faq,.final-signup{padding-left:var(--page-pad);padding-right:var(--page-pad)}.process,.faq{display:grid;grid-template-columns:minmax(18rem,.8fr) minmax(22rem,1fr);gap:clamp(4rem,12vw,18rem);padding-top:var(--section-space)}.section-copy h2,.faq h2,.final-signup h2{font-size:clamp(3.25rem,5.4vw,6.25rem)}.section-copy p{max-width:25rem;margin-top:2.5rem}.steps{display:grid;gap:clamp(4.5rem,7vw,7rem);margin:0;padding:2rem 0 0;list-style:none}.steps li{display:grid;grid-template-columns:clamp(6.5rem,8vw,8rem) 1fr;gap:clamp(2rem,3vw,3.5rem)}.steps strong{display:block;font-family:var(--display);font-size:clamp(4.5rem,8vw,8.5rem);font-weight:500;line-height:.78}.steps span{display:block;margin-top:1.5rem;color:var(--ink-soft);font:600 .8125rem var(--mono)}.steps h3{font-size:clamp(1.75rem,3vw,3.25rem);line-height:1.05}.steps p{max-width:24rem}.faq>div{padding-top:4rem}.faq details+details{margin-top:3rem}.faq summary{display:grid;grid-template-columns:1fr auto;gap:1.5rem;font:600 clamp(1.25rem,2vw,1.75rem) var(--display);cursor:pointer;list-style:none}.faq summary::-webkit-details-marker{display:none}.faq details[open] summary span:last-child{transform:rotate(45deg)}.faq details p{max-width:36rem;color:var(--ink-soft)}.final-signup{min-height:85svh;padding-top:calc(var(--section-space) + 3rem);padding-bottom:10rem}.final-signup h2{max-width:10ch;margin-bottom:2.5rem}.landing-footer{position:relative;min-height:17rem}.landing-footer img{position:absolute;right:-.5rem;bottom:5rem;width:min(40vw,46rem)}.landing-footer div{display:flex;justify-content:space-between;align-items:end;min-height:17rem;padding:7rem var(--page-pad) 2rem;font:600 .8125rem var(--mono)}
+@media(max-width:58rem){.hero{grid-template-columns:1fr;padding-top:8.5rem}.hero-visual{justify-self:center;width:min(88vw,35rem)}.process,.faq{display:block}.steps{margin-top:6rem}.faq>div{padding-top:5rem}.landing-footer img{width:min(74vw,27rem)}}@media(max-width:40rem){.hero{gap:3rem;align-content:start;padding-top:7rem}.hero h1{font-size:clamp(3rem,15vw,5.25rem)}.steps li{grid-template-columns:minmax(5.5rem,28vw) 1fr;gap:1.25rem}.final-signup{min-height:78svh}.landing-footer div{flex-direction:column;align-items:flex-start;justify-content:end}.landing-footer img{width:min(86vw,22rem)}}
+</style>

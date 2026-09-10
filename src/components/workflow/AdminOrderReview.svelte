@@ -19,6 +19,7 @@
 		orderStatusLabels,
 	} from '../../lib/workflow';
 	import StateNotice from '../ui/StateNotice.svelte';
+	import ConfirmDialog from '../ui/ConfirmDialog.svelte';
 
 	export let id: number;
 	type ReviewDraft = {
@@ -34,6 +35,7 @@
 	let saving = false;
 	let loadError = '';
 	let actionError = '';
+	let pendingTransition: 'accept' | 'reject' | null = null;
 
 	function syncDrafts(value: OrderRequest) {
 		shippingPrice = value.shippingPrice ?? DEFAULT_SHIPPING_PRICE;
@@ -168,8 +170,11 @@
 		]);
 	}
 
-	function confirmTransition(message: string, action: () => Promise<OrderRequest>) {
-		if (window.confirm(message)) void mutate([action]);
+	async function runTransition() {
+		if (!order || !pendingTransition) return;
+		const transition = pendingTransition;
+		await mutate([() => transition === 'accept' ? orderRequestsApi.accept(order!.id) : orderRequestsApi.reject(order!.id)]);
+		pendingTransition = null;
 	}
 
 	onMount(load);
@@ -224,14 +229,14 @@
 				<button
 					class="button-danger"
 					disabled={saving}
-					on:click={() => confirmTransition('¿Confirmas que deseas rechazar esta orden?', () => orderRequestsApi.reject(order!.id))}
+					on:click={() => pendingTransition = 'reject'}
 				>Rechazar orden</button>
 			{/if}
 			{#if order.status === 'in_review'}
 				<button
 					class="button"
 					disabled={saving || !canAcceptOrder(order)}
-					on:click={() => confirmTransition('¿Confirmas que cantidades, precios y total son correctos?', () => orderRequestsApi.accept(order!.id))}
+					on:click={() => pendingTransition = 'accept'}
 				>Aceptar orden</button>
 			{/if}
 		</div>
@@ -289,5 +294,14 @@
 			</table>
 		</div>
 	</section>
+	<ConfirmDialog
+		open={pendingTransition !== null}
+		title={pendingTransition === 'accept' ? 'Aceptar orden' : 'Rechazar orden'}
+		message={pendingTransition === 'accept' ? 'Confirma que las cantidades, los precios y el total son correctos.' : 'La orden quedará rechazada. Confirma esta decisión.'}
+		confirmLabel={pendingTransition === 'accept' ? 'Aceptar orden' : 'Rechazar orden'}
+		busy={saving}
+		onconfirm={runTransition}
+		oncancel={() => pendingTransition = null}
+	/>
 
 {/if}

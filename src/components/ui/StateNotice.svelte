@@ -1,17 +1,3 @@
-<script lang="ts">
-	export let kind: 'loading' | 'empty' | 'error' = 'empty';
-	export let message: string;
-</script>
-
-<div
-	class:border-red-900={kind === 'error'}
-	class:text-red-300={kind === 'error'}
-	class="state-box"
-	role={kind === 'error' ? 'alert' : 'status'}
->
-	{#if kind === 'loading'}
-		<span class="mb-3 inline-block size-5 animate-spin rounded-full border-2 border-stone-600 border-t-amber-400" aria-hidden="true"></span>
-	{/if}
-	<p>{message}</p>
-</div>
-
+<script lang="ts">export let kind: 'loading' | 'empty' | 'success' | 'error' = 'empty'; export let message: string; const labels={loading:'CARGANDO',empty:'SIN RESULTADOS',success:'LISTO',error:'ERROR'};</script>
+<div class:error-text={kind === 'error'} class="state-box" role={kind === 'error' ? 'alert' : 'status'}><p class="route-label">{labels[kind]}</p>{#if kind === 'loading'}<span class="loading-mark" aria-hidden="true"></span>{/if}<p>{message}</p></div>
+<style>.loading-mark{display:inline-block;width:1rem;height:1rem;margin:.75rem .5rem 0 0;border:.125rem solid var(--ink);border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.state-box>p:last-child{margin:.5rem 0}</style>

@@ -8,6 +8,7 @@ if (!Number.isInteger(id) || id <= 0) return Astro.redirect('/admin/order-period
 ---
 
 <AppShell title={`Administrar Pedido #${id} | Free Win`}>
+	<a class="text-action mb-6 inline-flex" href="/admin/order-periods">← Volver a Pedidos</a>
 	<header class="mb-8">
 		<p class="text-sm font-semibold uppercase tracking-widest text-amber-400">Organización</p>
 		<h1 class="page-heading mt-2">Administrar Pedido</h1>
@@ -15,4 +16,3 @@ if (!Number.isInteger(id) || id <= 0) return Astro.redirect('/admin/order-period
 	</header>
 	<AdminPeriodForm client:load id={id} />
 </AppShell>
-

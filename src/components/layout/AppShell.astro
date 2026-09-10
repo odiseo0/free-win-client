@@ -1,60 +1,14 @@
 ---
-interface Props {
-	title: string;
-	description?: string;
-}
-
-const {
-	title,
-	description = 'Free Win coordina Pedidos comunitarios de cartas Yu-Gi-Oh!.',
-} = Astro.props;
+interface Props { title: string; description?: string; }
+const { title, description = 'Free Win coordina Pedidos comunitarios de cartas Yu-Gi-Oh!.' } = Astro.props;
 const path = Astro.url.pathname;
 const links = [
 	{ href: '/order-periods', label: 'Pedidos', active: path.startsWith('/order-periods') },
 	{ href: '/orders', label: 'Mis órdenes', active: path.startsWith('/orders') },
 	{ href: '/admin/order-periods', label: 'Organizar', active: path.startsWith('/admin') },
+	{ href: '/account', label: 'Cuenta', active: path.startsWith('/account') },
 ];
 ---
-
-<!doctype html>
-<html lang="es">
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="description" content={description} />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<title>{title}</title>
-	</head>
-	<body class="min-h-screen bg-stone-950 text-stone-100 antialiased">
-		<div class="min-h-screen">
-			<header class="border-b border-stone-800 bg-stone-950/95">
-				<div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
-					<a class="flex items-center gap-3 font-semibold tracking-tight text-white" href="/">
-						<span class="grid size-9 place-items-center rounded-lg bg-amber-400 text-sm font-black text-stone-950">FW</span>
-						<span>Free Win</span>
-					</a>
-					<nav aria-label="Navegación principal" class="flex flex-wrap gap-1 text-sm">
-						{links.map((link) => (
-							<a
-								href={link.href}
-								aria-current={link.active ? 'page' : undefined}
-								class:list={[
-									'rounded-lg px-3 py-2 transition',
-									link.active
-										? 'bg-stone-800 text-white'
-										: 'text-stone-400 hover:bg-stone-900 hover:text-white',
-								]}
-							>
-								{link.label}
-							</a>
-						))}
-					</nav>
-				</div>
-			</header>
-			<main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-12"><slot /></main>
-			<footer class="mx-auto max-w-7xl border-t border-stone-800 px-4 py-6 text-sm text-stone-500 sm:px-6">
-				Proyecto comunitario sin fines de lucro para organizar Pedidos de cartas.
-			</footer>
-		</div>
-	</body>
-</html>
+<!doctype html><html lang="es"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width"/><meta name="description" content={description}/><meta name="theme-color" content="#FFF8F0"/><link rel="icon" type="image/svg+xml" href="/favicon.svg"/><link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600&family=Roboto:wght@400;500&display=swap" rel="stylesheet"/><title>{title}</title></head>
+<body><a class="skip-link" href="#contenido">Ir al contenido</a><div class="task-shell"><header class="site-header task-header" data-header><a class="brand" href="/" aria-label="Free Win, inicio">FREE WIN</a><button class="menu-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="task-menu" data-menu-toggle><span aria-hidden="true">•••</span></button><nav class="site-nav" id="task-menu" aria-label="Navegación principal" data-menu>{links.map(link=><a href={link.href} aria-current={link.active?'page':undefined}>{link.label}</a>)}</nav></header><main id="contenido" class="task-main"><slot/></main><footer class="task-footer"><img src="/assets/kaiba-footer.png" alt="" width="1254" height="1254" loading="lazy"/><p>FREE WIN / COMUNIDAD DE YU-GI-OH!</p><p>VENEZUELA</p></footer></div>
+<script is:inline>const h=document.querySelector('[data-header]'),b=h?.querySelector('[data-menu-toggle]'),m=h?.querySelector('[data-menu]');const o=x=>{if(!b||!m)return;b.setAttribute('aria-expanded',String(x));b.setAttribute('aria-label',x?'Cerrar menú':'Abrir menú');m.dataset.open=String(x)};b?.addEventListener('click',()=>o(b.getAttribute('aria-expanded')!=='true'));m?.addEventListener('click',e=>{if(e.target.closest('a'))o(false)});document.addEventListener('click',e=>{if(b?.getAttribute('aria-expanded')==='true'&&!e.target.closest('[data-header]'))o(false)});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&b?.getAttribute('aria-expanded')==='true'){o(false);b.focus()}});matchMedia('(min-width:58.001rem)').addEventListener('change',e=>{if(e.matches)o(false)});</script></body></html>
