@@ -273,16 +273,17 @@
 								{item.cardName}
 								<span class="mt-1 block font-normal text-stone-400">{item.cardCode} · {item.rarity} · {item.condition}</span>
 							</th>
-							<td class="px-3 py-3 text-right text-stone-300">{item.requestedQuantity}</td>
+							<td data-label="Solicitada" class="px-3 py-3 text-right text-stone-300">{item.requestedQuantity}</td>
 							{#if order.status === 'in_review' && !item.removedAt}
-								<td class="px-3 py-3"><label class="sr-only" for={`agreed-${item.id}`}>Cantidad acordada de {item.cardName}</label><input id={`agreed-${item.id}`} class="field w-24" type="number" min="0" max={item.requestedQuantity} bind:value={drafts[item.id].agreedQuantity} disabled={saving} on:change={() => saveItem(item.id)} /></td>
-								<td class="px-3 py-3"><label class="sr-only" for={`card-price-${item.id}`}>Precio por copia de {item.cardName}</label><input id={`card-price-${item.id}`} class="field w-28" type="number" min="0" step="0.01" value={drafts[item.id].cardUnitPrice} disabled={saving} on:input={(event) => updateCardUnitPrice(item.id, event)} on:change={() => saveItem(item.id)} /></td>
+								<td data-label="Acordada" class="px-3 py-3"><label class="sr-only" for={`agreed-${item.id}`}>Cantidad acordada de {item.cardName}</label><input id={`agreed-${item.id}`} class="field w-24" type="number" min="0" max={item.requestedQuantity} bind:value={drafts[item.id].agreedQuantity} disabled={saving} on:change={() => saveItem(item.id)} /></td>
+								<td data-label="Carta por copia" class="px-3 py-3"><label class="sr-only" for={`card-price-${item.id}`}>Precio por copia de {item.cardName}</label><input id={`card-price-${item.id}`} class="field w-28" type="number" min="0" step="0.01" value={drafts[item.id].cardUnitPrice} disabled={saving} on:input={(event) => updateCardUnitPrice(item.id, event)} on:change={() => saveItem(item.id)} /></td>
 							{:else}
-								<td class="px-3 py-3 text-stone-300">{item.agreedQuantity}</td>
-								<td class="px-3 py-3 text-stone-300">{formatMoney(item.cardUnitPrice, order.currency)}</td>
+								<td data-label="Acordada" class="px-3 py-3 text-stone-300">{item.agreedQuantity}</td>
+								<td data-label="Carta por copia" class="px-3 py-3 text-stone-300">{formatMoney(item.cardUnitPrice, order.currency)}</td>
 							{/if}
-							<td class="whitespace-nowrap px-3 py-3 text-right text-stone-300">{formatMoney(preview?.finalUnitPrice ?? item.finalUnitPrice, order.currency)}</td>
+							<td data-label="Total por copia" class="whitespace-nowrap px-3 py-3 text-right text-stone-300">{formatMoney(preview?.finalUnitPrice ?? item.finalUnitPrice, order.currency)}</td>
 							<td
+								data-label="Total"
 								class="whitespace-nowrap px-3 py-3 text-right font-medium text-stone-100"
 								title={getItemTotalCalculation(item, draft, order.currency)}
 							>

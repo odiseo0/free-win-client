@@ -14,6 +14,7 @@ import {
 	isValidAgreedQuantity,
 	isValidRequestedQuantity,
 	readIdFromPath,
+	selectMostRecentActiveOrder,
 } from './workflow';
 
 const item = {
@@ -144,5 +145,29 @@ describe('readIdFromPath', () => {
 		expect(readIdFromPath('/orders/41')).toBe(41);
 		expect(readIdFromPath('/admin/orders/0')).toBeNull();
 		expect(readIdFromPath('/orders/not-a-number')).toBeNull();
+	});
+});
+
+describe('selectMostRecentActiveOrder', () => {
+	it('selects the newest submitted or in-review order by date', () => {
+		const older = { ...order('submitted'), id: 10, dateAdded: '2026-01-01T00:00:00Z' };
+		const newest = { ...order('in_review'), id: 11, dateAdded: '2026-02-01T00:00:00Z' };
+		const closed = { ...order('accepted'), id: 12, dateAdded: '2026-03-01T00:00:00Z' };
+
+		expect(selectMostRecentActiveOrder([closed, older, newest])?.id).toBe(11);
+	});
+
+	it('ignores terminal orders and returns null when none are active', () => {
+		expect(selectMostRecentActiveOrder([
+			order('accepted'),
+			order('rejected'),
+			order('cancelled'),
+		])).toBeNull();
+	});
+
+	it('keeps the first active order when dates are equal', () => {
+		const first = { ...order('submitted'), id: 20 };
+		const second = { ...order('in_review'), id: 21 };
+		expect(selectMostRecentActiveOrder([first, second])?.id).toBe(20);
 	});
 });

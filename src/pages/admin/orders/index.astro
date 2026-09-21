@@ -9,8 +9,8 @@ const initialOrderPeriodId = Number.isInteger(parsedOrderPeriodId) && parsedOrde
 	: null;
 ---
 
-<AppShell title="Revisar órdenes | Free Win">
-	<a class="mb-6 inline-flex text-sm text-stone-400 hover:text-stone-100" href="/admin/order-periods">
+<AppShell title="Revisar órdenes | Free Win" layout="wide">
+	<a class="parent-link" href="/admin/order-periods">
 		← Volver a Pedidos
 	</a>
 	<header class="mb-8">
@@ -18,9 +18,5 @@ const initialOrderPeriodId = Number.isInteger(parsedOrderPeriodId) && parsedOrde
 		<h1 class="page-heading mt-2">Revisar órdenes</h1>
 		<p class="page-intro">Abre una orden para acordar cantidades, registrar precios y decidir su resultado.</p>
 	</header>
-	<nav class="mb-6 flex gap-2 text-sm" aria-label="Administración">
-		<a class="button-secondary" href="/admin/order-periods">Pedidos</a>
-		<a class="button-secondary" href="/admin/orders">Órdenes</a>
-	</nav>
 	<OrderList client:load admin initialOrderPeriodId={initialOrderPeriodId} />
 </AppShell>

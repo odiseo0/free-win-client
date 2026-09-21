@@ -54,6 +54,20 @@ export function canEditParticipantOrder(order: OrderRequest): boolean {
 	return order.status === 'submitted';
 }
 
+export function selectMostRecentActiveOrder(
+	orders: readonly OrderRequest[],
+): OrderRequest | null {
+	const activeOrders = orders.filter(
+		(order) => order.status === 'submitted' || order.status === 'in_review',
+	);
+
+	if (activeOrders.length === 0) return null;
+
+	return activeOrders.reduce((latest, candidate) =>
+		Date.parse(candidate.dateAdded) > Date.parse(latest.dateAdded) ? candidate : latest,
+	);
+}
+
 export function canStartReview(order: OrderRequest): boolean {
 	return order.status === 'submitted' && order.items.some((item) => !item.removedAt);
 }

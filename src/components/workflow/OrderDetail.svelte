@@ -13,6 +13,7 @@
 	let loadError = '';
 	let mutationError = '';
 	let quantities: Record<number, number> = {};
+	$: activeItemCount = order?.items.filter((item) => !item.removedAt).length ?? 0;
 
 	async function refresh() {
 		const nextOrder = await orderRequestsApi.get(id);
@@ -61,17 +62,17 @@
 {:else if loadError && !order}
 	<StateNotice kind="error" message={loadError} />
 {:else if order}
-	<section class="panel">
-		<div class="flex flex-wrap items-start justify-between gap-4">
+	<section class="order-status-header">
+		<div class="order-status-layout">
 			<div>
-				<p class="text-sm text-stone-500">Pedido #{order.orderPeriodId}</p>
-				<h1 class="mt-1 text-2xl font-bold text-white">Estado de la orden</h1>
-				<p class="mt-2 text-sm text-stone-400">Enviada el {formatDate(order.dateAdded)}</p>
+				<p class="route-label">ORDEN #{order.id} / PEDIDO #{order.orderPeriodId}</p>
+				<h1>Estado de la Orden</h1>
+				<p class="order-date">Enviada el {formatDate(order.dateAdded)} · {activeItemCount} {activeItemCount === 1 ? 'carta' : 'cartas'}</p>
 			</div>
-			<div class="text-right">
-				<span class="status">{orderStatusLabels[order.status]}</span>
-				<p class="mt-3 text-xl font-bold text-white">{formatMoney(order.agreedTotal, order.currency)}</p>
-				<a class="button-secondary mt-4" href={`/admin/orders/${order.id}`}>
+			<div class="order-status-total">
+				<span class="status">ORDEN / {orderStatusLabels[order.status]}</span>
+				<p>{formatMoney(order.agreedTotal, order.currency)}</p>
+				<a class="button-secondary" href={`/admin/orders/${order.id}`}>
 					Revisar como organizador
 				</a>
 			</div>
@@ -98,8 +99,9 @@
 							<th class="px-4 py-3 font-medium text-stone-100" scope="row">
 								{item.cardName}
 								<span class="mt-1 block font-normal text-stone-400">{item.cardCode} · {item.rarity} · {item.condition}</span>
+								{#if item.removedAt}<span class="route-label mt-1 block">RETIRADA</span>{/if}
 							</th>
-							<td class="px-4 py-3">
+							<td data-label="Cantidad" class="px-4 py-3">
 								{#if canEditParticipantOrder(order) && !item.removedAt}
 									<div class="flex min-w-44 items-center gap-2">
 										<label class="sr-only" for={`quantity-${item.id}`}>Cantidad de {item.cardName}</label>
@@ -110,8 +112,9 @@
 									{item.requestedQuantity}
 								{/if}
 							</td>
-							<td class="whitespace-nowrap px-4 py-3 text-right text-stone-300">{formatMoney(item.estimatedUnitPrice, order.currency)}</td>
+							<td data-label="Precio estimado" class="whitespace-nowrap px-4 py-3 text-right text-stone-300">{formatMoney(item.estimatedUnitPrice, order.currency)}</td>
 							<td
+								data-label="Total estimado"
 								class="whitespace-nowrap px-4 py-3 text-right font-medium text-stone-100"
 								title={`${formatMoney(item.estimatedUnitPrice, order.currency)} × ${quantities[item.id] ?? item.requestedQuantity} = ${formatMoney(Number(item.estimatedUnitPrice) * (quantities[item.id] ?? item.requestedQuantity), order.currency)}`}
 							>

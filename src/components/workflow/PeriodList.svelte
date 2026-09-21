@@ -56,10 +56,10 @@
 				{#each periods as period}
 					<tr class="bg-stone-950 align-middle">
 						<th class="px-4 py-3 font-medium text-stone-100" scope="row">{period.name}</th>
-						<td class="px-4 py-3"><span class="status">{periodStatusLabels[period.status]}</span></td>
-						<td class="whitespace-nowrap px-4 py-3 text-stone-300">{formatDate(period.opensAt)}</td>
-						<td class="whitespace-nowrap px-4 py-3 text-stone-300">{formatDate(period.closesAt)}</td>
-						<td class="px-4 py-3 text-right">
+						<td data-label="Estado" class="px-4 py-3"><span class="status">{periodStatusLabels[period.status]}</span></td>
+						<td data-label="Apertura" class="whitespace-nowrap px-4 py-3 text-stone-300">{formatDate(period.opensAt)}</td>
+						<td data-label="Cierre" class="whitespace-nowrap px-4 py-3 text-stone-300">{formatDate(period.closesAt)}</td>
+						<td data-label="Acciones" class="px-4 py-3 text-right">
 							<a class="button-secondary" href={`/admin/order-periods/${period.id}`}>Ver</a>
 						</td>
 					</tr>
@@ -68,25 +68,25 @@
 		</table>
 	</div>
 {:else}
-	<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+	<div class="period-list">
 		{#each periods as period}
-			<article class="panel flex flex-col">
-				<div class="flex items-start justify-between gap-4">
-					<h2 class="text-lg font-semibold text-white">{period.name}</h2>
-					<span class="status">{periodStatusLabels[period.status]}</span>
+			<article class="period-row">
+				<div class="period-row-heading">
+					<div><p class="route-label">PEDIDO #{period.id}</p><h2>{period.name}</h2></div>
+					<span class="status period-state">Pedido {periodStatusLabels[period.status].toLowerCase()}</span>
 				</div>
-				<dl class="mt-5 grid gap-3 text-sm">
+				<dl>
 					<div>
-						<dt class="text-stone-500">Apertura</dt>
-						<dd class="mt-0.5 text-stone-200">{formatDate(period.opensAt)}</dd>
+						<dt>Apertura</dt>
+						<dd>{formatDate(period.opensAt)}</dd>
 					</div>
 					<div>
-						<dt class="text-stone-500">Cierre</dt>
-						<dd class="mt-0.5 text-stone-200">{formatDate(period.closesAt)}</dd>
+						<dt>Cierre</dt>
+						<dd>{formatDate(period.closesAt)}</dd>
 					</div>
 				</dl>
 				<a
-					class="button-secondary mt-6"
+					class="button-secondary period-row-action"
 					href={`/order-periods/${period.id}`}
 				>
 					Ver Pedido

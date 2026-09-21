@@ -1,17 +1,10 @@
 ---
-import AppNavigation from './AppNavigation.svelte';
-
 interface Props {
 	title: string;
-	description?: string;
-	layout?: 'standard' | 'wide' | 'composer';
+	description: string;
 }
 
-const {
-	title,
-	description = 'Free Win coordina Pedidos comunitarios de cartas Yu-Gi-Oh!.',
-	layout = 'standard',
-} = Astro.props;
+const { title, description } = Astro.props;
 ---
 
 <!doctype html>
@@ -29,16 +22,16 @@ const {
 	</head>
 	<body>
 		<a class="skip-link" href="#contenido">Ir al contenido</a>
-		<div class="app-shell">
-			<AppNavigation client:load path={Astro.url.pathname} />
-			<div class="app-stage">
-				<main id="contenido" class:list={['app-main', `app-main--${layout}`]}>
+		<main id="contenido" class="account-page">
+			<section class="account-surface" aria-labelledby="account-title">
+				<div class="account-content">
+					<a class="account-brand" href="/" aria-label="Free Win, inicio">FREE WIN</a>
 					<slot />
-				</main>
-				<footer class:list={['task-footer', `task-footer--${layout}`]}>
-					FREE WIN / COMUNIDAD DE YU-GI-OH! VENEZUELA
-				</footer>
-			</div>
-		</div>
+				</div>
+				<figure class="account-art" aria-hidden="true">
+					<div class="account-art-standin"></div>
+				</figure>
+			</section>
+		</main>
 	</body>
 </html>
