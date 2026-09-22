@@ -49,14 +49,18 @@ dialog{width:min(32rem,calc(100% - 2rem));border:.125rem solid var(--ink);border
 .mobile-app-bar,.mobile-app-drawer{display:none}
 
 /* Account */
-.account-page{display:grid;min-height:100svh;place-items:center;padding:var(--page-pad)}
-.account-surface{display:grid;width:min(100%,80rem);min-height:min(78svh,50rem);grid-template-columns:minmax(24rem,2fr) minmax(0,3fr);align-items:center;gap:clamp(2rem,5vw,6rem)}
-.account-content{width:100%;max-width:28rem;padding-block:3rem}
+.account-layout{position:relative;display:flex;min-height:100svh;flex-direction:column}
+.account-back{position:absolute;top:0;right:clamp(1.25rem,2.5vw,3rem);z-index:1;display:inline-flex;min-height:44px;align-items:center;color:var(--ink);font-family:var(--display);font-size:.8125rem;font-weight:600;text-decoration:underline;text-underline-offset:.25rem}
+.account-back:hover{text-decoration-thickness:.12rem}
+.account-page{display:grid;flex:1;place-items:center;padding:var(--page-pad)}
+.account-footer{width:min(calc(100% - 2 * var(--page-pad)),80rem)}
+.account-surface{display:grid;width:min(100%,80rem);grid-template-columns:minmax(0,48%) minmax(0,52%);align-items:stretch}
+.account-content{width:100%;max-width:28rem}
 .account-heading{margin-top:clamp(2rem,5vh,3.5rem)}
 .account-title{margin:0;font-family:var(--display);font-size:clamp(2rem,3.2vw,3.25rem);font-weight:600;line-height:1;white-space:nowrap}
 .account-intro{max-width:27rem;margin:1.5rem 0 0;color:var(--ink-soft)}
-.account-art{display:grid;width:100%;align-self:center;justify-items:end;margin:0;overflow:hidden}
-.account-art-standin{width:min(100%,35rem);aspect-ratio:4/5;background:var(--ink)}
+.account-art{position:relative;width:100%;height:100%;min-height:0;margin:0;overflow:hidden}
+.account-art img{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover}
 
 /* Pedido composer */
 .period-composer{min-width:0}

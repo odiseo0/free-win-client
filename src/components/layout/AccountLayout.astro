@@ -1,7 +1,7 @@
 ---
 interface Props {
-	title: string;
-	description: string;
+    title: string;
+    description: string;
 }
 
 const { title, description } = Astro.props;
@@ -9,29 +9,51 @@ const { title, description } = Astro.props;
 
 <!doctype html>
 <html lang="es">
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="description" content={description} />
-		<meta name="theme-color" content="#FFF8F0" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="preconnect" href="https://fonts.googleapis.com" />
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-		<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600&family=Roboto:wght@400;500&display=swap" rel="stylesheet" />
-		<title>{title}</title>
-	</head>
-	<body>
-		<a class="skip-link" href="#contenido">Ir al contenido</a>
-		<main id="contenido" class="account-page">
-			<section class="account-surface" aria-labelledby="account-title">
-				<div class="account-content">
-					<a class="account-brand" href="/" aria-label="Free Win, inicio">FREE WIN</a>
-					<slot />
-				</div>
-				<figure class="account-art" aria-hidden="true">
-					<div class="account-art-standin"></div>
-				</figure>
-			</section>
-		</main>
-	</body>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width" />
+        <meta name="description" content={description} />
+        <meta name="theme-color" content="#FFF8F0" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600&family=Roboto:wght@400;500&display=swap"
+            rel="stylesheet"
+        />
+        <title>{title}</title>
+    </head>
+    <body class="account-layout">
+        <a class="skip-link" href="#contenido">
+            Ir al contenido
+        </a>
+        <a class="account-back" href="/">
+            Volver al inicio
+        </a>
+        <main id="contenido" class="account-page">
+            <section class="account-surface" aria-labelledby="account-title">
+                <div class="account-content">
+                    <a
+                        class="account-brand"
+                        href="/"
+                        aria-label="Free Win, inicio"
+                    >
+                        FREE WIN
+                    </a>
+                    <slot />
+                </div>
+                <figure class="account-art" aria-hidden="true">
+                    <img
+                        src="/assets/account-art.png"
+                        alt=""
+                        width="1161"
+                        height="1354"
+                    />
+                </figure>
+            </section>
+        </main>
+        <footer class="task-footer account-footer">
+            FREE WIN / COMUNIDAD DE YU-GI-OH! VENEZUELA
+        </footer>
+    </body>
 </html>
