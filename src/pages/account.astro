@@ -1,12 +1,49 @@
 ---
-import AccountLayout from '../components/layout/AccountLayout.astro';
-import AccountForm from '../components/account/AccountForm.svelte';
+import AppShell from '../components/layout/AppShell.astro';
 import '../styles/global.css';
 ---
-<AccountLayout title="Cuenta | Free Win" description="Crea una cuenta de Free Win.">
-	<header class="account-heading">
-		<h1 id="account-title" class="account-title">Entra a Free Win.</h1>
-		<p class="account-intro">Crea una cuenta para participar en los Pedidos de la comunidad.</p>
+
+<AppShell title="Mi cuenta | Free Win" description="Consulta tu perfil y tus direcciones de entrega en Free Win.">
+	<header>
+		<p class="route-label">Mi espacio</p>
+		<h1 class="page-heading">Mi cuenta</h1>
+		<p class="page-intro">Aquí podrás consultar tus datos y tus direcciones de entrega cuando esté disponible el inicio de sesión.</p>
 	</header>
-	<AccountForm client:load />
-</AccountLayout>
+
+	<div class="account-overview">
+		<section class="account-notice" aria-labelledby="account-notice-title">
+			<p class="route-label">Acceso pendiente</p>
+			<h2 id="account-notice-title">Aún no podemos mostrar tus datos.</h2>
+			<p>El inicio de sesión todavía no está disponible. Puedes crear una cuenta; tu perfil aparecerá aquí cuando podamos identificarte.</p>
+			<a class="button" href="/join">Ir al registro</a>
+		</section>
+
+		<section class="account-overview-section" aria-labelledby="profile-title">
+			<div>
+				<p class="route-label">Datos personales</p>
+				<h2 id="profile-title">Tu perfil</h2>
+			</div>
+			<p>Podrás consultar tu nombre, alias, correo, teléfono y documento de identidad, si lo agregas.</p>
+		</section>
+
+		<section class="account-overview-section" aria-labelledby="addresses-title">
+			<div>
+				<p class="route-label">Entregas</p>
+				<h2 id="addresses-title">Tus direcciones</h2>
+			</div>
+			<p>Podrás consultar el nombre de cada dirección, estado, ciudad, dirección, referencia y código postal.</p>
+		</section>
+	</div>
+</AppShell>
+
+<style>
+	.account-overview{display:grid;gap:clamp(3rem,5vw,5rem)}
+	.account-notice{max-width:42rem;border-top:2px solid var(--ink);padding-top:1.5rem}
+	.account-notice .route-label,.account-overview-section .route-label{margin:0 0 .75rem}
+	.account-notice h2,.account-overview-section h2{margin:0;font-family:var(--display);font-size:clamp(1.75rem,3vw,2.75rem);font-weight:600;line-height:1.1}
+	.account-notice p:not(.route-label),.account-overview-section>p{max-width:36rem;margin:1rem 0 0;color:var(--ink-soft)}
+	.account-notice .button{margin-top:1.5rem}
+	.account-overview-section{display:grid;grid-template-columns:minmax(11rem,.65fr) minmax(0,1fr);gap:1rem clamp(2rem,5vw,5rem);border-top:1px solid var(--ink);padding-top:1.5rem}
+	.account-overview-section>p{margin-top:0}
+	@media(max-width:40rem){.account-overview-section{grid-template-columns:1fr}.account-overview-section>p{margin-top:.25rem}}
+</style>

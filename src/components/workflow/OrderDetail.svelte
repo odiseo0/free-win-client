@@ -1,129 +1,183 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount, tick } from 'svelte';
 	import { getApiErrorMessage } from '../../lib/api/client';
-	import { orderRequestsApi } from '../../lib/api/workflow';
-	import type { OrderRequest } from '../../lib/api/types';
-	import { canEditParticipantOrder, formatDate, formatMoney, isValidRequestedQuantity, orderStatusLabels } from '../../lib/workflow';
+	import { orderPeriodsApi, orderRequestsApi } from '../../lib/api/workflow';
+	import type { CardListing, OrderRequest } from '../../lib/api/types';
+	import { QuantityAutosave, type QuantitySaveState } from '../../lib/quantityAutosave';
+	import { canEditParticipantOrder, formatDate, formatMoney, orderStatusLabels } from '../../lib/workflow';
 	import StateNotice from '../ui/StateNotice.svelte';
+	import OrderCardSearchDialog from './OrderCardSearchDialog.svelte';
 
 	export let id: number;
 	let order: OrderRequest | null = null;
+	let periodName = '';
 	let loading = true;
-	let saving = false;
 	let loadError = '';
-	let mutationError = '';
 	let quantities: Record<number, number> = {};
+	let rowStates: Record<number, QuantitySaveState> = {};
+	let rowErrors: Record<number, string> = {};
+	let autosave: QuantityAutosave | null = null;
+	let searchOpen = false;
+	let addButton: HTMLButtonElement;
 	$: activeItemCount = order?.items.filter((item) => !item.removedAt).length ?? 0;
 
-	async function refresh() {
-		const nextOrder = await orderRequestsApi.get(id);
-		order = nextOrder;
-		quantities = Object.fromEntries(
-			nextOrder.items.map((item) => [item.id, item.requestedQuantity]),
-		);
+	function replaceOrder(next: OrderRequest) {
+		const wasEditable = order && canEditParticipantOrder(order);
+		order = next;
+		if (!canEditParticipantOrder(next)) {
+			autosave?.stop();
+			autosave = null;
+			searchOpen = false;
+			quantities = Object.fromEntries(next.items.map((item) => [item.id, item.requestedQuantity]));
+			rowStates = {};
+			return;
+		}
+		if (!autosave || !wasEditable) {
+			quantities = Object.fromEntries(next.items.map((item) => [item.id, item.requestedQuantity]));
+			autosave = new QuantityAutosave(
+				next.items.filter((item) => !item.removedAt).map((item) => [item.id, item.requestedQuantity]),
+				saveQuantity,
+				(itemId, state, error) => {
+					rowStates = { ...rowStates, [itemId]: state };
+					rowErrors = { ...rowErrors, [itemId]: error ? getApiErrorMessage(error) : '' };
+				},
+			);
+		} else {
+			for (const item of next.items) {
+				if (quantities[item.id] === undefined) {
+					quantities = { ...quantities, [item.id]: item.requestedQuantity };
+					autosave.register(item.id, item.requestedQuantity);
+				}
+			}
+		}
+	}
+
+	async function saveQuantity(itemId: number, quantity: number): Promise<number> {
+		if (!order) throw new Error('La Orden ya no está disponible.');
+		try {
+			const response = await orderRequestsApi.updateItem(order.id, itemId, { requestedQuantity: quantity });
+			if (response.status !== 'submitted') {
+				replaceOrder(response);
+				throw new Error('Esta Orden ya no está pendiente. No puedes cambiar sus cartas.');
+			}
+			const savedItem = response.items.find((item) => item.id === itemId);
+			if (!savedItem) throw new Error('No pudimos confirmar la cantidad guardada.');
+			// The local quantity may have changed while this request ran.
+			order = { ...order, items: order.items.map((item) => item.id === itemId ? savedItem : item) };
+			return savedItem.requestedQuantity;
+		} catch (caught) {
+			try {
+				const latest = await orderRequestsApi.get(id);
+				if (latest.status !== 'submitted') replaceOrder(latest);
+			} catch { /* Keep the original error. */ }
+			throw caught;
+		}
 	}
 
 	async function load() {
 		loading = true;
 		try {
-			await refresh();
+			const next = await orderRequestsApi.get(id);
+			replaceOrder(next);
+			try {
+				const period = await orderPeriodsApi.get(next.orderPeriodId);
+				periodName = period.name;
+			} catch { periodName = ''; }
 		} catch (caught) {
 			loadError = getApiErrorMessage(caught);
-		} finally {
-			loading = false;
-		}
+		} finally { loading = false; }
 	}
 
-	async function saveQuantity(itemId: number) {
-		if (!order) return;
-		if (!isValidRequestedQuantity(quantities[itemId])) {
-			mutationError = 'La cantidad solicitada debe ser un número entero mayor que cero.';
-			return;
-		}
-		saving = true;
-		mutationError = '';
+	function changeQuantity(itemId: number, delta: number) {
+		if (!order || !canEditParticipantOrder(order)) return;
+		const next = (quantities[itemId] ?? 1) + delta;
+		if (next < 1 || !Number.isSafeInteger(next)) return;
+		quantities = { ...quantities, [itemId]: next };
+		autosave?.change(itemId, next);
+	}
+
+	async function addListing(listing: CardListing) {
+		if (!order || !canEditParticipantOrder(order) || listing.id == null) return;
+		const existing = order.items.find((item) => item.cardListingId === listing.id);
+		if (existing && !existing.removedAt) return;
 		try {
-			await orderRequestsApi.updateItem(order.id, itemId, {
-				requestedQuantity: quantities[itemId],
-			});
-			await refresh();
+			const next = existing
+				? await orderRequestsApi.restoreItem(order.id, existing.id)
+				: await orderRequestsApi.addItem(order.id, { cardListingId: listing.id, requestedQuantity: 1 });
+			replaceOrder(next);
 		} catch (caught) {
-			mutationError = getApiErrorMessage(caught);
-		} finally {
-			saving = false;
+			try {
+				const latest = await orderRequestsApi.get(id);
+				if (latest.status !== 'submitted') replaceOrder(latest);
+			} catch { /* Keep the original error. */ }
+			throw caught;
 		}
 	}
 
-	onMount(load);
+	async function closeSearch() {
+		searchOpen = false;
+		await tick();
+		addButton?.focus();
+	}
+	function warnBeforeLeave(event: BeforeUnloadEvent) {
+		if (!autosave?.hasUnsaved()) return;
+		event.preventDefault();
+		event.returnValue = '';
+	}
+
+	onMount(() => {
+		void load();
+		window.addEventListener('beforeunload', warnBeforeLeave);
+		return () => window.removeEventListener('beforeunload', warnBeforeLeave);
+	});
+	onDestroy(() => autosave?.stop());
 </script>
 
 {#if loading}
-	<StateNotice kind="loading" message="Cargando la orden…" />
+	<StateNotice kind="loading" message="Cargando la Orden…" />
 {:else if loadError && !order}
 	<StateNotice kind="error" message={loadError} />
 {:else if order}
 	<section class="order-status-header">
-		<div class="order-status-layout">
-			<div>
-				<p class="route-label">ORDEN #{order.id} / PEDIDO #{order.orderPeriodId}</p>
-				<h1>Estado de la Orden</h1>
-				<p class="order-date">Enviada el {formatDate(order.dateAdded)} · {activeItemCount} {activeItemCount === 1 ? 'carta' : 'cartas'}</p>
-			</div>
-			<div class="order-status-total">
-				<span class="status">ORDEN / {orderStatusLabels[order.status]}</span>
-				<p>{formatMoney(order.agreedTotal, order.currency)}</p>
-				<a class="button-secondary" href={`/admin/orders/${order.id}`}>
-					Revisar como organizador
-				</a>
-			</div>
-		</div>
+		<p class="route-label">ORDEN #{order.id} / PEDIDO #{order.orderPeriodId}</p>
+		<h1>Orden para {periodName || `Pedido #${order.orderPeriodId}`}</h1>
+		<p class="order-date">Enviada el {formatDate(order.dateAdded)} · {activeItemCount} {activeItemCount === 1 ? 'carta' : 'cartas'}</p>
+		<p class="order-status-line"><span class="status">{orderStatusLabels[order.status]}</span></p>
 	</section>
-
-	{#if mutationError}<p class="mt-5 rounded-lg bg-red-950/50 p-3 text-sm text-red-300" role="alert">{mutationError}</p>{/if}
-
-	<section class="panel mt-6">
-		<h2 class="text-lg font-semibold text-white">Cartas solicitadas</h2>
-		<div class="mt-4 overflow-x-auto rounded-lg border border-stone-800">
-			<table class="w-full min-w-3xl border-collapse text-left text-sm">
-				<thead class="bg-stone-900 text-stone-300">
-					<tr>
-						<th class="px-4 py-3 font-semibold" scope="col">Carta</th>
-						<th class="px-4 py-3 font-semibold" scope="col">Cantidad</th>
-						<th class="px-4 py-3 text-right font-semibold" scope="col">Precio estimado</th>
-						<th class="px-4 py-3 text-right font-semibold" scope="col">Total estimado</th>
-					</tr>
-				</thead>
-				<tbody class="divide-y divide-stone-800">
-					{#each order.items as item}
-						<tr class:opacity-50={Boolean(item.removedAt)} class="bg-stone-950 align-middle">
-							<th class="px-4 py-3 font-medium text-stone-100" scope="row">
-								{item.cardName}
-								<span class="mt-1 block font-normal text-stone-400">{item.cardCode} · {item.rarity} · {item.condition}</span>
-								{#if item.removedAt}<span class="route-label mt-1 block">RETIRADA</span>{/if}
-							</th>
-							<td data-label="Cantidad" class="px-4 py-3">
+	<section class="order-detail-items">
+		<div class="order-detail-heading">
+			<h2>Cartas solicitadas</h2>
+			{#if canEditParticipantOrder(order)}<button bind:this={addButton} class="button-secondary" type="button" on:click={() => searchOpen = true}>Añadir cartas</button>{/if}
+		</div>
+		<div class="order-detail-table-wrap">
+			<table class="order-detail-table">
+				<thead><tr><th scope="col">Carta</th><th scope="col">Cantidad</th><th scope="col">Precio estimado</th><th scope="col">Total estimado</th></tr></thead>
+				<tbody>
+					{#each order.items as item (item.id)}
+						<tr class:removed={Boolean(item.removedAt)}>
+							<th scope="row">{item.cardName}<span class="order-detail-card-note">{item.cardCode} · {item.rarity} · {item.condition}</span>{#if item.removedAt}<span class="route-label">RETIRADA</span>{/if}</th>
+							<td data-label="Cantidad">
 								{#if canEditParticipantOrder(order) && !item.removedAt}
-									<div class="flex min-w-44 items-center gap-2">
-										<label class="sr-only" for={`quantity-${item.id}`}>Cantidad de {item.cardName}</label>
-										<input id={`quantity-${item.id}`} class="field w-20" type="number" min="1" bind:value={quantities[item.id]} />
-										<button class="button-secondary" disabled={saving} on:click={() => saveQuantity(item.id)}>Guardar</button>
+									<div class="new-order-quantity" aria-label={`Cantidad de ${item.cardName}`}>
+										<button type="button" aria-label={`Restar una copia de ${item.cardName}`} disabled={(quantities[item.id] ?? item.requestedQuantity) <= 1} on:click={() => changeQuantity(item.id, -1)}>−</button>
+										<span>{quantities[item.id] ?? item.requestedQuantity}</span>
+										<button type="button" aria-label={`Añadir una copia de ${item.cardName}`} on:click={() => changeQuantity(item.id, 1)}>+</button>
 									</div>
-								{:else}
-									{item.requestedQuantity}
-								{/if}
+									<div class="order-row-feedback" aria-live="polite">
+										{#if rowStates[item.id] === 'pending'}Guardando en 3 segundos…{/if}
+										{#if rowStates[item.id] === 'saving'}Guardando…{/if}
+										{#if rowStates[item.id] === 'error'}<span class="error-text" role="alert">{rowErrors[item.id] || 'No pudimos guardar la cantidad.'}</span> <button class="text-action" type="button" on:click={() => autosave?.retry(item.id)}>Reintentar</button>{/if}
+									</div>
+								{:else}{item.requestedQuantity}{/if}
 							</td>
-							<td data-label="Precio estimado" class="whitespace-nowrap px-4 py-3 text-right text-stone-300">{formatMoney(item.estimatedUnitPrice, order.currency)}</td>
-							<td
-								data-label="Total estimado"
-								class="whitespace-nowrap px-4 py-3 text-right font-medium text-stone-100"
-								title={`${formatMoney(item.estimatedUnitPrice, order.currency)} × ${quantities[item.id] ?? item.requestedQuantity} = ${formatMoney(Number(item.estimatedUnitPrice) * (quantities[item.id] ?? item.requestedQuantity), order.currency)}`}
-							>
-								<span class="cursor-help border-b border-dotted border-stone-600">{formatMoney(Number(item.estimatedUnitPrice) * (quantities[item.id] ?? item.requestedQuantity), order.currency)}</span>
-							</td>
+							<td data-label="Precio estimado">{formatMoney(item.estimatedUnitPrice, order.currency)}</td>
+							<td data-label="Total estimado">{formatMoney(Number(item.estimatedUnitPrice) * (quantities[item.id] ?? item.requestedQuantity), order.currency)}</td>
 						</tr>
 					{/each}
 				</tbody>
 			</table>
 		</div>
+		{#if order.agreedTotal !== null && order.agreedTotal !== undefined}<p class="order-final-total">Total final <strong>{formatMoney(order.agreedTotal, order.currency)}</strong></p>{/if}
 	</section>
+	{#if searchOpen}<OrderCardSearchDialog open={searchOpen} {order} onClose={closeSearch} onAdd={addListing} />{/if}
 {/if}

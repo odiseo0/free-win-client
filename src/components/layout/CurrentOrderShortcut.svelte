@@ -15,7 +15,7 @@
 		<a class="current-order-link" href={`/orders/${order.id}`}>
 			<strong>ORDEN #{order.id}</strong>
 			<span>{orderStatusLabels[order.status]}</span>
-			<span class="text-link">Ver estado</span>
+			<span class="text-link">Ver Orden</span>
 		</a>
 	{:else if failed}
 		<a class="current-order-link" href="/orders">

@@ -1,9 +1,25 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { orderRequestsApi } from './workflow';
+import { orderPeriodsApi, orderRequestsApi } from './workflow';
 
 afterEach(() => vi.unstubAllGlobals());
 
 describe('order request API wrapper', () => {
+	it('requests only open Pedidos for the new Orden selector', async () => {
+		const fetchMock = vi.fn().mockResolvedValue(
+			new Response(JSON.stringify({ items: [], total: 0 }), {
+				status: 200,
+				headers: { 'Content-Type': 'application/json' },
+			}),
+		);
+		vi.stubGlobal('fetch', fetchMock);
+
+		await orderPeriodsApi.list({ page: 1, shows: 100, status: 'open' });
+
+		expect(String(fetchMock.mock.calls[0][0])).toBe(
+			'http://127.0.0.1:8000/order-periods/?page=1&shows=100&status=open',
+		);
+	});
+
 	it('creates an OrderRequest with the exact OpenAPI payload', async () => {
 		const fetchMock = vi.fn().mockResolvedValue(
 			new Response(JSON.stringify({ id: 73 }), {

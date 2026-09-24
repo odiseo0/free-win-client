@@ -98,7 +98,7 @@
 	{/if}
 
 	{#if order}
-		<a class="button-secondary order-status-link" href={`/orders/${order.id}`}>Ver estado de la Orden</a>
+		<a class="button-secondary order-status-link" href={`/orders/${order.id}`}>Ver Orden</a>
 	{/if}
 {/snippet}
 

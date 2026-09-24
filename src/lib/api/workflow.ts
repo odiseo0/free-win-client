@@ -4,6 +4,7 @@ import type {
 	OrderPeriodCreate,
 	OrderPeriodHistory,
 	OrderPeriodList,
+	OrderPeriodStatus,
 	OrderPeriodUpdate,
 	OrderRequest,
 	OrderRequestCreate,
@@ -22,8 +23,12 @@ export interface PageQuery {
 	shows?: number;
 }
 
+export interface OrderPeriodListQuery extends PageQuery {
+	status?: OrderPeriodStatus;
+}
+
 export const orderPeriodsApi = {
-	list: (query: PageQuery = {}) =>
+	list: (query: OrderPeriodListQuery = {}) =>
 		backendRequest<OrderPeriodList>('/order-periods/', { query: { ...query } }),
 	get: (id: number) => backendRequest<OrderPeriod>(`/order-periods/${id}`),
 	history: (id: number, query: PageQuery = {}) =>

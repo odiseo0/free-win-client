@@ -1,0 +1,15 @@
+---
+import AppShell from '../../components/layout/AppShell.astro';
+import NewOrder from '../../components/workflow/NewOrder.svelte';
+import '../../styles/global.css';
+---
+
+<AppShell title="Nueva Orden | Free Win" layout="composer">
+	<a class="parent-link" href="/orders">← Volver a mis órdenes</a>
+	<header>
+		<p class="route-label">PARTICIPAR / NUEVA ORDEN</p>
+		<h1 class="page-heading">Nueva Orden.</h1>
+		<p class="page-intro">Busca tus cartas, revisa la Orden y elige un Pedido abierto antes de enviarla.</p>
+	</header>
+	<NewOrder client:load />
+</AppShell>

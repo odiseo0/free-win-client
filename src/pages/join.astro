@@ -1,0 +1,13 @@
+---
+import AccountLayout from '../components/layout/AccountLayout.astro';
+import AccountForm from '../components/account/AccountForm.svelte';
+import '../styles/global.css';
+---
+
+<AccountLayout title="Únete a Free Win" description="Crea una cuenta para participar en los Pedidos de Free Win.">
+	<header class="account-heading">
+		<h1 id="account-title" class="account-title">Entra a Free Win.</h1>
+		<p class="account-intro">Crea una cuenta para participar en los Pedidos de la comunidad.</p>
+	</header>
+	<AccountForm client:load />
+</AccountLayout>

@@ -17,7 +17,7 @@ export const periodStatusLabels: Record<OrderPeriodStatus, string> = {
 };
 
 export const orderStatusLabels: Record<OrderRequestStatus, string> = {
-	submitted: 'Enviada',
+	submitted: 'Pendiente',
 	in_review: 'En revisión',
 	accepted: 'Aceptada',
 	rejected: 'Rechazada',

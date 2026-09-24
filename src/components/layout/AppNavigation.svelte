@@ -17,7 +17,7 @@
 
 	const links = [
 		{ href: '/order-periods', label: 'Pedidos', active: path.startsWith('/order-periods') },
-		{ href: '/orders', label: 'Órdenes', active: path.startsWith('/orders') },
+		{ href: '/orders', label: 'Órdenes', active: path.startsWith('/orders') && path !== '/orders/new' },
 		{ href: '/admin/order-periods', label: 'Organizar', active: path.startsWith('/admin') },
 	];
 
@@ -71,7 +71,7 @@
 			</nav>
 			<div class="app-shortcuts">
 				<p class="route-label">ACCESOS</p>
-				<a class="new-order-link" href="/order-periods" on:click={mobile ? closeDrawer : undefined}>Nueva Orden</a>
+				<a class="new-order-link" href="/orders/new" aria-current={path === '/orders/new' ? 'page' : undefined} on:click={mobile ? closeDrawer : undefined}>Nueva Orden</a>
 				<CurrentOrderShortcut {loading} order={activeOrder} {failed} />
 			</div>
 		</div>
