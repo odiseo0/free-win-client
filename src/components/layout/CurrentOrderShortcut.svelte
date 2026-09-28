@@ -1,9 +1,9 @@
 <script lang="ts">
-	import type { OrderRequest } from '../../lib/api/types';
+	import type { CurrentOrderSummary } from '../../lib/currentOrderCache';
 	import { orderStatusLabels } from '../../lib/workflow';
 
 	export let loading = false;
-	export let order: OrderRequest | null = null;
+	export let order: CurrentOrderSummary | null = null;
 	export let failed = false;
 </script>
 

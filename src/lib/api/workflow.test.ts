@@ -1,9 +1,25 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { readCurrentOrderCache, writeCurrentOrderCache } from '../currentOrderCache';
 import { orderPeriodsApi, orderRequestsApi } from './workflow';
 
 afterEach(() => vi.unstubAllGlobals());
 
 describe('order request API wrapper', () => {
+	it('clears the shortcut cache after a successful order change', async () => {
+		const values = new Map<string, string>();
+		vi.stubGlobal('sessionStorage', {
+			getItem: (key: string) => values.get(key) ?? null,
+			setItem: (key: string, value: string) => values.set(key, value),
+			removeItem: (key: string) => values.delete(key),
+		});
+		vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ id: 8 }), {
+			status: 200, headers: { 'Content-Type': 'application/json' },
+		})));
+		writeCurrentOrderCache({ id: 8, status: 'submitted' });
+		await orderRequestsApi.cancel(8);
+		expect(readCurrentOrderCache()).toBeNull();
+	});
+
 	it('requests only open Pedidos for the new Orden selector', async () => {
 		const fetchMock = vi.fn().mockResolvedValue(
 			new Response(JSON.stringify({ items: [], total: 0 }), {

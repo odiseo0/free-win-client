@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
 	import { orderRequestsApi } from '../../lib/api/workflow';
-	import type { OrderRequest } from '../../lib/api/types';
+	import { readCurrentOrderCache, writeCurrentOrderCache, type CurrentOrderSummary } from '../../lib/currentOrderCache';
 	import { selectMostRecentActiveOrder } from '../../lib/workflow';
 	import CurrentOrderShortcut from './CurrentOrderShortcut.svelte';
 
 	export let path: string;
 
-	let activeOrder: OrderRequest | null = null;
+	let activeOrder: CurrentOrderSummary | null = null;
 	let loading = true;
 	let failed = false;
 	let drawer: HTMLDialogElement;
@@ -22,9 +22,17 @@
 	];
 
 	async function loadCurrentOrder() {
+		const cached = readCurrentOrderCache();
+		if (cached) {
+			activeOrder = cached.order;
+			loading = false;
+			return;
+		}
 		try {
 			const response = await orderRequestsApi.list({ page: 1, shows: 100 });
-			activeOrder = selectMostRecentActiveOrder(response.items);
+			const selected = selectMostRecentActiveOrder(response.items);
+			activeOrder = selected ? { id: selected.id, status: selected.status } : null;
+			writeCurrentOrderCache(activeOrder);
 		} catch {
 			failed = true;
 		} finally {

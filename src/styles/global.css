@@ -179,6 +179,8 @@ dialog{width:min(32rem,calc(100% - 2rem));border:.125rem solid var(--ink);border
 .order-detail-table .removed{opacity:.55}
 .order-detail-card-note{display:block;margin-top:.3rem;color:var(--ink-soft);font-size:.85rem;font-weight:400}
 .order-row-feedback{min-height:1rem;margin-top:.35rem;color:var(--ink-soft);font-size:.75rem}
+.order-estimated-total{display:flex;max-width:28rem;justify-content:space-between;gap:1.5rem;margin:1.5rem 0 0 auto;border-top:2px solid var(--ink);padding-top:1rem;font-family:var(--display);font-size:1.1rem}
+.order-estimated-total strong{white-space:nowrap}
 .order-final-total{display:flex;justify-content:flex-end;gap:2rem;margin:1.5rem 0 0;font-family:var(--display);font-size:1.3rem}
 .order-search-dialog[open]{position:fixed;inset:0;z-index:100;display:block;width:min(80rem,calc(100vw - 2rem));max-width:none;max-height:85dvh;margin:auto;border:2px solid var(--ink);padding:0;background:var(--paper);color:var(--ink);overflow-y:auto}
 .order-search-dialog::backdrop{background:rgba(30,14,56,.5)}

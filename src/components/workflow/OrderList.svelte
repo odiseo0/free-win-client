@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { getApiErrorMessage } from '../../lib/api/client';
-	import { orderRequestsApi } from '../../lib/api/workflow';
+	import { orderPeriodsApi, orderRequestsApi } from '../../lib/api/workflow';
 	import type { OrderRequest } from '../../lib/api/types';
 	import { formatDate, formatMoney, orderStatusLabels } from '../../lib/workflow';
 	import StateNotice from '../ui/StateNotice.svelte';
@@ -9,6 +9,7 @@
 	export let admin = false;
 	export let initialOrderPeriodId: number | null = null;
 	let orders: OrderRequest[] = [];
+	let periodNames: Record<number, string> = {};
 	let loading = true;
 	let error = '';
 	let periodFilter = initialOrderPeriodId?.toString() ?? '';
@@ -25,6 +26,11 @@
 				orderPeriodId: periodFilter ? Number(periodFilter) : undefined,
 			});
 			orders = response.items;
+			const periodIds = [...new Set(response.items.map((order) => order.orderPeriodId))];
+			const periods = await Promise.allSettled(periodIds.map((id) => orderPeriodsApi.get(id)));
+			periodNames = Object.fromEntries(periods.flatMap((result, index) =>
+				result.status === 'fulfilled' ? [[periodIds[index], result.value.name]] : [],
+			));
 		} catch (caught) {
 			error = getApiErrorMessage(caught);
 		} finally {
@@ -49,7 +55,7 @@
 							<span class="status">{orderStatusLabels[order.status]}</span>
 						</div>
 						<p class="mt-2 text-sm text-stone-400">
-							Pedido #{order.orderPeriodId} · {order.items.filter((item) => !item.removedAt).length} cartas · {formatDate(order.dateAdded)}
+							{periodNames[order.orderPeriodId] || `Pedido #${order.orderPeriodId}`} · {order.items.filter((item) => !item.removedAt).length} cartas · {formatDate(order.dateAdded)}
 						</p>
 					</div>
 					<p class="font-semibold text-stone-100">{formatMoney(order.agreedTotal, order.currency)}</p>

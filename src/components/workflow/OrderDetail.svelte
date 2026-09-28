@@ -20,6 +20,9 @@
 	let searchOpen = false;
 	let addButton: HTMLButtonElement;
 	$: activeItemCount = order?.items.filter((item) => !item.removedAt).length ?? 0;
+	$: estimatedCardSubtotal = Math.round((order?.items
+		.filter((item) => !item.removedAt)
+		.reduce((total, item) => total + Number(item.estimatedUnitPrice) * (quantities[item.id] ?? item.requestedQuantity), 0) ?? 0) * 100) / 100;
 
 	function replaceOrder(next: OrderRequest) {
 		const wasEditable = order && canEditParticipantOrder(order);
@@ -177,6 +180,7 @@
 				</tbody>
 			</table>
 		</div>
+		<p class="order-estimated-total"><span>Subtotal estimado de cartas</span><strong>{formatMoney(estimatedCardSubtotal, order.currency)}</strong></p>
 		{#if order.agreedTotal !== null && order.agreedTotal !== undefined}<p class="order-final-total">Total final <strong>{formatMoney(order.agreedTotal, order.currency)}</strong></p>{/if}
 	</section>
 	{#if searchOpen}<OrderCardSearchDialog open={searchOpen} {order} onClose={closeSearch} onAdd={addListing} />{/if}

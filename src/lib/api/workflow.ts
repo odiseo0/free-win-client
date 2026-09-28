@@ -1,4 +1,5 @@
-import { backendRequest } from './client';
+import { invalidateCurrentOrderCache } from '../currentOrderCache';
+import { backendRequest, type ApiClientOptions } from './client';
 import type {
 	OrderPeriod,
 	OrderPeriodCreate,
@@ -46,34 +47,40 @@ export interface OrderRequestListQuery extends PageQuery {
 	status?: OrderRequestStatus;
 }
 
+async function orderRequest<T>(path: string, options: ApiClientOptions = {}): Promise<T> {
+	const response = await backendRequest<T>(path, options);
+	if (options.method && options.method !== 'GET') invalidateCurrentOrderCache();
+	return response;
+}
+
 export const orderRequestsApi = {
 	list: (query: OrderRequestListQuery = {}) =>
-		backendRequest<OrderRequestList>('/order-requests/', { query: { ...query } }),
-	get: (id: number) => backendRequest<OrderRequest>(`/order-requests/${id}`),
+		orderRequest<OrderRequestList>('/order-requests/', { query: { ...query } }),
+	get: (id: number) => orderRequest<OrderRequest>(`/order-requests/${id}`),
 	history: (id: number, query: PageQuery = {}) =>
-		backendRequest<OrderRequestHistory[]>(`/order-requests/${id}/history`, { query: { ...query } }),
+		orderRequest<OrderRequestHistory[]>(`/order-requests/${id}/history`, { query: { ...query } }),
 	create: (body: OrderRequestCreate) =>
-		backendRequest<OrderRequest>('/order-requests/', { method: 'POST', body }),
+		orderRequest<OrderRequest>('/order-requests/', { method: 'POST', body }),
 	updateNote: (id: number, body: OrderRequestUpdate) =>
-		backendRequest<OrderRequest>(`/order-requests/${id}`, { method: 'PATCH', body }),
+		orderRequest<OrderRequest>(`/order-requests/${id}`, { method: 'PATCH', body }),
 	updateOrderPricing: (id: number, body: OrderRequestPricingUpdate) =>
-		backendRequest<OrderRequest>(`/order-requests/${id}/pricing`, {
+		orderRequest<OrderRequest>(`/order-requests/${id}/pricing`, {
 			method: 'PATCH',
 			body,
 		}),
 	addItem: (id: number, body: OrderRequestItemCreate) =>
-		backendRequest<OrderRequest>(`/order-requests/${id}/items`, { method: 'POST', body }),
+		orderRequest<OrderRequest>(`/order-requests/${id}/items`, { method: 'POST', body }),
 	updateItem: (id: number, itemId: number, body: OrderRequestItemUpdate) =>
-		backendRequest<OrderRequest>(`/order-requests/${id}/items/${itemId}`, {
+		orderRequest<OrderRequest>(`/order-requests/${id}/items/${itemId}`, {
 			method: 'PATCH',
 			body,
 		}),
 	removeItem: (id: number, itemId: number) =>
-		backendRequest<OrderRequest>(`/order-requests/${id}/items/${itemId}/remove`, {
+		orderRequest<OrderRequest>(`/order-requests/${id}/items/${itemId}/remove`, {
 			method: 'POST',
 		}),
 	restoreItem: (id: number, itemId: number) =>
-		backendRequest<OrderRequest>(`/order-requests/${id}/items/${itemId}/restore`, {
+		orderRequest<OrderRequest>(`/order-requests/${id}/items/${itemId}/restore`, {
 			method: 'POST',
 		}),
 	updatePricing: (
@@ -81,20 +88,20 @@ export const orderRequestsApi = {
 		itemId: number,
 		body: OrderRequestItemPricingUpdate,
 	) =>
-		backendRequest<OrderRequest>(`/order-requests/${id}/items/${itemId}/pricing`, {
+		orderRequest<OrderRequest>(`/order-requests/${id}/items/${itemId}/pricing`, {
 			method: 'PATCH',
 			body,
 		}),
 	startReview: (id: number) =>
-		backendRequest<OrderRequest>(`/order-requests/${id}/start-review`, { method: 'POST' }),
+		orderRequest<OrderRequest>(`/order-requests/${id}/start-review`, { method: 'POST' }),
 	accept: (id: number) =>
-		backendRequest<OrderRequest>(`/order-requests/${id}/accept`, { method: 'POST' }),
+		orderRequest<OrderRequest>(`/order-requests/${id}/accept`, { method: 'POST' }),
 	reject: (id: number) =>
-		backendRequest<OrderRequest>(`/order-requests/${id}/reject`, { method: 'POST' }),
+		orderRequest<OrderRequest>(`/order-requests/${id}/reject`, { method: 'POST' }),
 	cancel: (id: number) =>
-		backendRequest<OrderRequest>(`/order-requests/${id}/cancel`, { method: 'POST' }),
+		orderRequest<OrderRequest>(`/order-requests/${id}/cancel`, { method: 'POST' }),
 	reopen: (id: number) =>
-		backendRequest<OrderRequest>(`/order-requests/${id}/reopen-for-review`, {
+		orderRequest<OrderRequest>(`/order-requests/${id}/reopen-for-review`, {
 			method: 'POST',
 		}),
 };
