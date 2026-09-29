@@ -31,6 +31,48 @@ El cliente usa `PUBLIC_FREE_WIN_API_URL=http://127.0.0.1:8000` y
 La generación OpenAPI requiere ambos servicios, pero `check`, `test` y `build` usan
 los contratos ya guardados y funcionan sin conectarse a ellos.
 
+## Docker Compose y Cloudflare Tunnel
+
+El cliente se construye como servidor Astro independiente. Por defecto usa la API
+en `http://127.0.0.1:8000` y Search en `http://127.0.0.1:8001`.
+
+```shell
+cp .env.example .env
+docker compose up -d --build
+```
+
+El cliente queda disponible solo en `http://127.0.0.1:4321`. Las variables
+`PUBLIC_*` se fijan durante el build, así que debes reconstruir la imagen cuando
+cambien.
+
+Cloudflare Tunnel es opcional. Añade el token a `.env`:
+
+```dotenv
+CLOUDFLARED_TUNNEL_TOKEN=tu-token
+```
+
+Después inicia el perfil:
+
+```shell
+docker compose --profile tunnel up -d
+```
+
+Configura estas rutas en el túnel administrado:
+
+```text
+dominio del cliente -> http://free-win-client:4321
+dominio de API      -> http://host.docker.internal:8000
+dominio de Search   -> http://host.docker.internal:8001
+```
+
+Para usar dominios públicos, cambia `PUBLIC_FREE_WIN_API_URL` y
+`PUBLIC_FREE_WIN_SEARCH_URL`, cambia `API_CORS_ALLOWED_ORIGINS` en ambos
+backends y reconstruye los tres servicios.
+
+Cloudflare Tunnel no añade autenticación propia a Free Win. Configura una política
+de Cloudflare Access o mantén el despliegue privado hasta que el backend tenga
+autenticación real.
+
 ## Rutas de la primera fase
 
 Las URL y los identificadores técnicos están en inglés; todo el texto enfocado en el

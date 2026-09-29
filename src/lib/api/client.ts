@@ -37,6 +37,7 @@ export function createApiRequest(baseUrl: string, service: string) {
 	): Promise<T> {
 		const response = await fetch(createUrl(baseUrl, path, query), {
 			...options,
+			credentials: 'include',
 			body: body === undefined ? undefined : JSON.stringify(body),
 			headers: {
 				Accept: 'application/json',

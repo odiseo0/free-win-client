@@ -1,0 +1,65 @@
+name: free-win-client
+
+x-security: &security
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  init: true
+  restart: unless-stopped
+  logging:
+    driver: local
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  free-win-client:
+    <<: *security
+    image: free-win-client:local
+    build:
+      context: .
+      args:
+        PUBLIC_FREE_WIN_API_URL: ${PUBLIC_FREE_WIN_API_URL:-http://127.0.0.1:8000}
+        PUBLIC_FREE_WIN_SEARCH_URL: ${PUBLIC_FREE_WIN_SEARCH_URL:-http://127.0.0.1:8001}
+    environment:
+      HOST: 0.0.0.0
+      NODE_ENV: production
+      PORT: "4321"
+    ports:
+      - "127.0.0.1:${FREE_WIN_CLIENT_PORT:-4321}:4321"
+    user: "1000:1000"
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:4321/').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
+    stop_grace_period: 15s
+    mem_limit: ${FREE_WIN_CLIENT_MEMORY_LIMIT:-256m}
+    cpus: ${FREE_WIN_CLIENT_CPU_LIMIT:-0.5}
+    pids_limit: ${FREE_WIN_CLIENT_PIDS_LIMIT:-128}
+
+  cloudflared:
+    <<: *security
+    profiles: [tunnel]
+    image: cloudflare/cloudflared:2026.9.3@sha256:072c067d25ccbe61d46e18f0d0723255f2bb5304f7317caa95b27031520ff92c
+    command: [tunnel, --no-autoupdate, --metrics, "127.0.0.1:2000", run]
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARED_TUNNEL_TOKEN:-}
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    user: "65532:65532"
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    healthcheck:
+      test: [CMD, cloudflared, tunnel, --metrics, "127.0.0.1:2000", ready]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+    stop_grace_period: 15s
+    mem_limit: ${CLOUDFLARED_MEMORY_LIMIT:-128m}
+    cpus: ${CLOUDFLARED_CPU_LIMIT:-0.5}
+    pids_limit: ${CLOUDFLARED_PIDS_LIMIT:-128}

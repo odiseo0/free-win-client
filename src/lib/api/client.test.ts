@@ -31,6 +31,7 @@ describe('service API clients', () => {
 			Accept: 'application/json',
 			'Content-Type': 'application/json',
 		});
+		expect(options.credentials).toBe('include');
 	});
 
 	it('throws an ApiError with the response detail', async () => {
