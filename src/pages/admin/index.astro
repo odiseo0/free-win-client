@@ -1,0 +1,6 @@
+---
+import AppShell from '../../components/layout/AppShell.astro';
+import AdminDashboard from '../../components/admin/AdminDashboard.svelte';
+import '../../styles/global.css';
+---
+<AppShell title="Resumen de administración | Free Win" layout="wide" area="admin"><header><p class="route-label">ADMINISTRACIÓN</p><h1 class="page-heading">Resumen</h1><p class="page-intro">Consulta el trabajo pendiente y abre cada área de organización.</p></header><AdminDashboard client:load /></AppShell>

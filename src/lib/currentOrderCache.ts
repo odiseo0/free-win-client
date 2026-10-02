@@ -12,7 +12,7 @@ interface CacheEntry {
 
 const KEY = 'free-win:current-order:v1';
 const LIFETIME_MS = 30_000;
-const ACTIVE_STATUSES: OrderRequestStatus[] = ['submitted', 'in_review'];
+const ACTIVE_STATUSES: OrderRequestStatus[] = ['submitted', 'in_review', 'accepted', 'paid'];
 
 function getStorage(): Storage | null {
 	try { return typeof sessionStorage === 'undefined' ? null : sessionStorage; }

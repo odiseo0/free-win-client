@@ -4,9 +4,12 @@
 	import { orderPeriodsApi, orderRequestsApi } from '../../lib/api/workflow';
 	import type { CardListing, OrderRequest } from '../../lib/api/types';
 	import { QuantityAutosave, type QuantitySaveState } from '../../lib/quantityAutosave';
+	import { getCoolStuffIncCardUrl } from '../../lib/sourceLinks';
 	import { canEditParticipantOrder, formatDate, formatMoney, orderStatusLabels } from '../../lib/workflow';
 	import StateNotice from '../ui/StateNotice.svelte';
 	import OrderCardSearchDialog from './OrderCardSearchDialog.svelte';
+	import OrderDeliveryPanel from './OrderDeliveryPanel.svelte';
+	import OrderHistoryPanel from './OrderHistoryPanel.svelte';
 
 	export let id: number;
 	let order: OrderRequest | null = null;
@@ -19,6 +22,9 @@
 	let autosave: QuantityAutosave | null = null;
 	let searchOpen = false;
 	let addButton: HTMLButtonElement;
+	let noteDraft = '';
+	let actionBusy = false;
+	let actionError = '';
 	$: activeItemCount = order?.items.filter((item) => !item.removedAt).length ?? 0;
 	$: estimatedCardSubtotal = Math.round((order?.items
 		.filter((item) => !item.removedAt)
@@ -27,6 +33,7 @@
 	function replaceOrder(next: OrderRequest) {
 		const wasEditable = order && canEditParticipantOrder(order);
 		order = next;
+		noteDraft = next.note ?? '';
 		if (!canEditParticipantOrder(next)) {
 			autosave?.stop();
 			autosave = null;
@@ -53,6 +60,28 @@
 				}
 			}
 		}
+	}
+
+	async function runAction(action: () => Promise<OrderRequest>) {
+		actionBusy = true; actionError = '';
+		try { replaceOrder(await action()); }
+		catch (caught) { actionError = getApiErrorMessage(caught); }
+		finally { actionBusy = false; }
+	}
+
+	async function saveNote() {
+		if (!order) return;
+		await runAction(() => orderRequestsApi.updateNote(order!.id, { note: noteDraft.trim() || null }));
+	}
+
+	async function toggleRemoved(itemId: number, removed: boolean) {
+		if (!order) return;
+		await runAction(() => removed ? orderRequestsApi.restoreItem(order!.id, itemId) : orderRequestsApi.removeItem(order!.id, itemId));
+	}
+
+	async function cancelOrder() {
+		if (!order || !window.confirm('¿Cancelar esta Orden? No podrás seguir editándola.')) return;
+		await runAction(() => orderRequestsApi.cancel(order!.id));
 	}
 
 	async function saveQuantity(itemId: number, quantity: number): Promise<number> {
@@ -146,6 +175,10 @@
 		<h1>Orden para {periodName || `Pedido #${order.orderPeriodId}`}</h1>
 		<p class="order-date">Enviada el {formatDate(order.dateAdded)} · {activeItemCount} {activeItemCount === 1 ? 'carta' : 'cartas'}</p>
 		<p class="order-status-line"><span class="status">{orderStatusLabels[order.status]}</span></p>
+		{#if canEditParticipantOrder(order)}
+			<form class="order-note-form" on:submit|preventDefault={saveNote}><label class="label" for="order-note">Nota para la revisión</label><textarea id="order-note" class="field" rows="3" bind:value={noteDraft} disabled={actionBusy}></textarea><div class="action-row"><button class="button-secondary" type="submit" disabled={actionBusy}>Guardar nota</button><button class="button-danger" type="button" disabled={actionBusy} on:click={cancelOrder}>Cancelar Orden</button></div></form>
+		{:else if order.note}<p class="order-note"><strong>Nota:</strong> {order.note}</p>{/if}
+		{#if actionError}<p class="error-text" role="alert">{actionError}</p>{/if}
 	</section>
 	<section class="order-detail-items">
 		<div class="order-detail-heading">
@@ -154,11 +187,15 @@
 		</div>
 		<div class="order-detail-table-wrap">
 			<table class="order-detail-table">
-				<thead><tr><th scope="col">Carta</th><th scope="col">Cantidad</th><th scope="col">Precio estimado</th><th scope="col">Total estimado</th></tr></thead>
+				<thead><tr><th scope="col">Carta</th><th scope="col">Solicitada</th><th scope="col">Acordada</th><th scope="col">Precio</th><th scope="col">Total</th><th scope="col">Acción</th></tr></thead>
 				<tbody>
 					{#each order.items as item (item.id)}
 						<tr class:removed={Boolean(item.removedAt)}>
-							<th scope="row">{item.cardName}<span class="order-detail-card-note">{item.cardCode} · {item.rarity} · {item.condition}</span>{#if item.removedAt}<span class="route-label">RETIRADA</span>{/if}</th>
+							<th scope="row">
+								<a class="text-action" href={getCoolStuffIncCardUrl(item.cardName)} target="_blank" rel="noreferrer">{item.cardName}<span class="sr-only"> en CoolStuffInc (abre en una pestaña nueva)</span></a>
+								<span class="order-detail-card-note">{item.cardCode} · {item.rarity} · {item.condition}</span>
+								{#if item.removedAt}<span class="route-label">RETIRADA</span>{/if}
+							</th>
 							<td data-label="Cantidad">
 								{#if canEditParticipantOrder(order) && !item.removedAt}
 									<div class="new-order-quantity" aria-label={`Cantidad de ${item.cardName}`}>
@@ -173,8 +210,10 @@
 									</div>
 								{:else}{item.requestedQuantity}{/if}
 							</td>
-							<td data-label="Precio estimado">{formatMoney(item.estimatedUnitPrice, order.currency)}</td>
-							<td data-label="Total estimado">{formatMoney(Number(item.estimatedUnitPrice) * (quantities[item.id] ?? item.requestedQuantity), order.currency)}</td>
+							<td data-label="Acordada">{item.agreedQuantity}</td>
+							<td data-label="Precio">{formatMoney(item.finalUnitPrice ?? item.estimatedUnitPrice, order.currency)}</td>
+							<td data-label="Total">{formatMoney(item.agreedTotal ?? Number(item.estimatedUnitPrice) * (quantities[item.id] ?? item.requestedQuantity), order.currency)}</td>
+							<td data-label="Acción">{#if canEditParticipantOrder(order)}<button class="text-action" type="button" disabled={actionBusy} on:click={() => toggleRemoved(item.id, Boolean(item.removedAt))}>{item.removedAt ? 'Restaurar' : 'Retirar'}</button>{:else}—{/if}</td>
 						</tr>
 					{/each}
 				</tbody>
@@ -182,6 +221,9 @@
 		</div>
 		<p class="order-estimated-total"><span>Subtotal estimado de cartas</span><strong>{formatMoney(estimatedCardSubtotal, order.currency)}</strong></p>
 		{#if order.agreedTotal !== null && order.agreedTotal !== undefined}<p class="order-final-total">Total final <strong>{formatMoney(order.agreedTotal, order.currency)}</strong></p>{/if}
+		{#if order.shippingPrice}<p class="order-final-total"><span>Envío incluido</span><strong>{formatMoney(order.shippingPrice, order.currency)}</strong></p>{/if}
 	</section>
+	<OrderDeliveryPanel {order} />
+	<OrderHistoryPanel orderId={order.id} />
 	{#if searchOpen}<OrderCardSearchDialog open={searchOpen} {order} onClose={closeSearch} onAdd={addListing} />{/if}
 {/if}

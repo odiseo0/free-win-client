@@ -1,0 +1,4 @@
+---
+import AppShell from '../../../components/layout/AppShell.astro'; import ShipmentForm from '../../../components/admin/ShipmentForm.svelte'; import '../../../styles/global.css'; const orderPeriodId=Number(Astro.url.searchParams.get('orderPeriodId')); if(!Number.isInteger(orderPeriodId)||orderPeriodId<=0)return Astro.redirect('/admin/shipments');
+---
+<AppShell title="Crear envío | Administración | Free Win" area="admin"><a class="parent-link" href={`/admin/shipments?orderPeriodId=${orderPeriodId}`}>← Volver a Envíos</a><header><p class="route-label">ADMINISTRACIÓN / PEDIDO #{orderPeriodId}</p><h1 class="page-heading">Crear envío</h1></header><ShipmentForm client:load {orderPeriodId} /></AppShell>

@@ -149,17 +149,16 @@ describe('readIdFromPath', () => {
 });
 
 describe('selectMostRecentActiveOrder', () => {
-	it('selects the newest submitted or in-review order by date', () => {
+	it('selects the newest non-terminal order by date', () => {
 		const older = { ...order('submitted'), id: 10, dateAdded: '2026-01-01T00:00:00Z' };
 		const newest = { ...order('in_review'), id: 11, dateAdded: '2026-02-01T00:00:00Z' };
-		const closed = { ...order('accepted'), id: 12, dateAdded: '2026-03-01T00:00:00Z' };
+		const closed = { ...order('rejected'), id: 12, dateAdded: '2026-03-01T00:00:00Z' };
 
 		expect(selectMostRecentActiveOrder([closed, older, newest])?.id).toBe(11);
 	});
 
 	it('ignores terminal orders and returns null when none are active', () => {
 		expect(selectMostRecentActiveOrder([
-			order('accepted'),
 			order('rejected'),
 			order('cancelled'),
 		])).toBeNull();

@@ -4,8 +4,10 @@
 	import { readCurrentOrderCache, writeCurrentOrderCache, type CurrentOrderSummary } from '../../lib/currentOrderCache';
 	import { selectMostRecentActiveOrder } from '../../lib/workflow';
 	import CurrentOrderShortcut from './CurrentOrderShortcut.svelte';
+	import { clearMockSession, readMockSession, SESSION_CHANGED_EVENT, type MockSession } from '../../lib/session';
 
 	export let path: string;
+	export let area: 'user' | 'admin' = 'user';
 
 	let activeOrder: CurrentOrderSummary | null = null;
 	let loading = true;
@@ -14,11 +16,21 @@
 	let menuButton: HTMLButtonElement;
 	let open = false;
 	let previousOverflow = '';
+	let session: MockSession | null = null;
 
-	const links = [
-		{ href: '/order-periods', label: 'Pedidos', active: path.startsWith('/order-periods') },
-		{ href: '/orders', label: 'Órdenes', active: path.startsWith('/orders') && path !== '/orders/new' },
-		{ href: '/admin/order-periods', label: 'Organizar', active: path.startsWith('/admin') },
+	$: links = area === 'admin' ? [
+		{ href: '/admin', label: 'Resumen', active: path === '/admin' },
+		{ href: '/admin/order-periods', label: 'Pedidos', active: path.startsWith('/admin/order-periods') },
+		{ href: '/admin/orders', label: 'Órdenes', active: path.startsWith('/admin/orders') },
+		{ href: '/admin/shipments', label: 'Envíos', active: path.startsWith('/admin/shipments') },
+		{ href: '/admin/users', label: 'Usuarios', active: path.startsWith('/admin/users') },
+		{ href: '/admin/roles', label: 'Roles y permisos', active: path.startsWith('/admin/roles') },
+		{ href: '/admin/delivery-stages', label: 'Etapas de entrega', active: path.startsWith('/admin/delivery-stages') },
+	] : [
+		{ href: '/order-periods', label: 'Pedido actual', active: path.startsWith('/order-periods') },
+		{ href: '/orders', label: 'Mis órdenes', active: path.startsWith('/orders') && path !== '/orders/new' },
+		{ href: '/orders/new', label: 'Nueva Orden', active: path === '/orders/new' },
+		{ href: '/account', label: 'Mi cuenta', active: path.startsWith('/account') },
 	];
 
 	async function loadCurrentOrder() {
@@ -62,28 +74,38 @@
 		if (event.target === drawer) closeDrawer();
 	}
 
-	onMount(loadCurrentOrder);
+	function syncSession() { session = readMockSession(); }
+	function signOut() { clearMockSession(); window.location.assign('/join'); }
+	onMount(() => {
+		syncSession();
+		window.addEventListener(SESSION_CHANGED_EVENT, syncSession);
+		if (area === 'user') void loadCurrentOrder(); else loading = false;
+	});
 	onDestroy(() => {
 		if (typeof document !== 'undefined') document.body.style.overflow = previousOverflow;
+		if (typeof window !== 'undefined') window.removeEventListener(SESSION_CHANGED_EVENT, syncSession);
 	});
 </script>
 
 {#snippet navigationContent(mobile = false)}
 	<div class="app-nav-content">
 		<div>
-			<a class="app-brand" href="/" aria-label="Free Win, inicio">FREE WIN</a>
+			<a class="app-brand" href={area === 'admin' ? '/admin' : '/'} aria-label={area === 'admin' ? 'Free Win, administración' : 'Free Win, inicio'}>FREE WIN{area === 'admin' ? ' / ADMIN' : ''}</a>
 			<nav class="app-primary-nav" aria-label={mobile ? 'Navegación móvil' : 'Navegación principal'}>
 				{#each links as link}
 					<a href={link.href} aria-current={link.active ? 'page' : undefined} on:click={mobile ? closeDrawer : undefined}>{link.label}</a>
 				{/each}
 			</nav>
-			<div class="app-shortcuts">
+			{#if area === 'user'}<div class="app-shortcuts">
 				<p class="route-label">ACCESOS</p>
-				<a class="new-order-link" href="/orders/new" aria-current={path === '/orders/new' ? 'page' : undefined} on:click={mobile ? closeDrawer : undefined}>Nueva Orden</a>
 				<CurrentOrderShortcut {loading} order={activeOrder} {failed} />
-			</div>
+			</div>{/if}
 		</div>
-		<a class="account-link" href="/account" aria-current={path.startsWith('/account') ? 'page' : undefined} on:click={mobile ? closeDrawer : undefined}>Cuenta</a>
+		<div class="app-session">
+			{#if session?.persona === 'admin'}<a class="area-switch" href={area === 'admin' ? '/order-periods' : '/admin'} on:click={mobile ? closeDrawer : undefined}>{area === 'admin' ? 'Vista de usuario' : 'Administración'}</a>{/if}
+			{#if session}<p class="route-label">SESIÓN DE PRUEBA<br />{session.displayName}</p>{/if}
+			<button class="text-action" type="button" on:click={signOut}>Salir</button>
+		</div>
 	</div>
 {/snippet}
 
@@ -92,7 +114,7 @@
 </aside>
 
 <div class="mobile-app-bar">
-	<a class="app-brand" href="/">FREE WIN</a>
+	<a class="app-brand" href={area === 'admin' ? '/admin' : '/'}>FREE WIN{area === 'admin' ? ' / ADMIN' : ''}</a>
 	<button bind:this={menuButton} class="mobile-menu-button" type="button" aria-label="Abrir navegación" aria-expanded={open} aria-controls="mobile-app-drawer" on:click={showDrawer}>•••</button>
 </div>
 

@@ -11,7 +11,6 @@
 		calculateDefaultTaxUnitPrice,
 		calculateItemPricingPreview,
 		calculateOrderPricingPreview,
-		canAcceptOrder,
 		canStartReview,
 		DEFAULT_SHIPPING_PRICE,
 		formatMoney,
@@ -20,6 +19,10 @@
 	} from '../../lib/workflow';
 	import StateNotice from '../ui/StateNotice.svelte';
 	import ConfirmDialog from '../ui/ConfirmDialog.svelte';
+	import { orderDeliveryApi } from '../../lib/api/deliveries';
+	import { getCoolStuffIncCardUrl } from '../../lib/sourceLinks';
+	import OrderHistoryPanel from './OrderHistoryPanel.svelte';
+	import FulfillmentTools from '../admin/FulfillmentTools.svelte';
 
 	export let id: number;
 	type ReviewDraft = {
@@ -36,6 +39,9 @@
 	let loadError = '';
 	let actionError = '';
 	let pendingTransition: 'accept' | 'reject' | null = null;
+	let carrier: 'zoom' | 'mrw' = 'zoom';
+	let trackingNumber = '';
+	let deliveryCost = '';
 
 	function syncDrafts(value: OrderRequest) {
 		shippingPrice = value.shippingPrice ?? DEFAULT_SHIPPING_PRICE;
@@ -89,6 +95,19 @@
 		draft.cardUnitPrice = (event.currentTarget as HTMLInputElement).value;
 		draft.taxUnitPrice = calculateDefaultTaxUnitPrice(draft.cardUnitPrice);
 		drafts = { ...drafts };
+	}
+
+	function canAcceptDraftOrder(value: OrderRequest): boolean {
+		if (value.status !== 'in_review' || !areValidPriceComponents(shippingPrice)) return false;
+		const activeItems = value.items.filter((item) => !item.removedAt);
+		return activeItems.length > 0 && activeItems.every((item) => {
+			const draft = drafts[item.id];
+			return Boolean(
+				draft
+				&& isValidAgreedQuantity(draft.agreedQuantity, item.requestedQuantity)
+				&& areValidPriceComponents(draft.cardUnitPrice, draft.taxUnitPrice)
+			);
+		});
 	}
 
 	async function refresh() {
@@ -149,6 +168,7 @@
 		}
 		const pricing: OrderRequestItemPricingUpdate = {
 			cardUnitPrice: draft.cardUnitPrice,
+			taxUnitPrice: draft.taxUnitPrice,
 		};
 
 		await mutate([
@@ -173,8 +193,39 @@
 	async function runTransition() {
 		if (!order || !pendingTransition) return;
 		const transition = pendingTransition;
-		await mutate([() => transition === 'accept' ? orderRequestsApi.accept(order!.id) : orderRequestsApi.reject(order!.id)]);
+		if (transition === 'accept') {
+			const activeItems = order.items.filter((item) => !item.removedAt);
+			const actions: Array<() => Promise<OrderRequest>> = [
+				() => orderRequestsApi.updateOrderPricing(order!.id, { shippingPrice }),
+			];
+			for (const item of activeItems) {
+				const draft = drafts[item.id];
+				actions.push(
+					() => orderRequestsApi.updateItem(order!.id, item.id, {
+						agreedQuantity: draft.agreedQuantity,
+					}),
+					() => orderRequestsApi.updatePricing(order!.id, item.id, {
+						cardUnitPrice: draft.cardUnitPrice,
+						taxUnitPrice: draft.taxUnitPrice,
+					}),
+				);
+			}
+			actions.push(() => orderRequestsApi.accept(order!.id));
+			await mutate(actions);
+		} else {
+			await mutate([() => orderRequestsApi.reject(order!.id)]);
+		}
 		pendingTransition = null;
+	}
+
+	async function createFulfillment() {
+		if (!order) return;
+		saving = true; actionError = '';
+		try {
+			await orderDeliveryApi.createFulfillment(order.id, { carrier, trackingNumber: trackingNumber || null, shippingCost: deliveryCost || null, currency: order.currency, costPayer: 'recipient' });
+			await refresh();
+		} catch (caught) { actionError = getApiErrorMessage(caught); }
+		finally { saving = false; }
 	}
 
 	onMount(load);
@@ -235,9 +286,17 @@
 			{#if order.status === 'in_review'}
 				<button
 					class="button"
-					disabled={saving || !canAcceptOrder(order)}
+					disabled={saving || !canAcceptDraftOrder(order)}
 					on:click={() => pendingTransition = 'accept'}
 				>Aceptar orden</button>
+			{/if}
+			{#if order.status === 'accepted'}
+				<button class="button" disabled={saving} on:click={() => mutate([() => orderDeliveryApi.markPaid(order!.id)])}>Marcar como pagada</button>
+				<button class="button-secondary" disabled={saving} on:click={() => mutate([() => orderRequestsApi.reopen(order!.id)])}>Reabrir revisión</button>
+			{/if}
+			{#if order.status === 'paid'}
+				<button class="button-secondary" disabled={saving} on:click={() => mutate([() => orderDeliveryApi.revertPayment(order!.id)])}>Revertir pago</button>
+				{#if order.purchasingFinalizedAt}<button class="button-secondary" disabled={saving} on:click={() => mutate([() => orderDeliveryApi.reopenPurchasing(order!.id)])}>Reabrir compra</button>{:else}<button class="button" disabled={saving} on:click={() => mutate([() => orderDeliveryApi.finalizePurchasing(order!.id)])}>Finalizar compra</button>{/if}
 			{/if}
 		</div>
 	</section>
@@ -270,7 +329,7 @@
 						{@const preview = order.status === 'in_review' && !item.removedAt && draft ? calculateItemPricingPreview(draft.cardUnitPrice, draft.taxUnitPrice, draft.agreedQuantity) : null}
 						<tr class:opacity-50={Boolean(item.removedAt)} class="bg-stone-950 align-middle">
 							<th class="px-3 py-3 font-medium text-stone-100" scope="row">
-								{item.cardName}
+								<a class="text-action" href={getCoolStuffIncCardUrl(item.cardName)} target="_blank" rel="noreferrer">{item.cardName}<span class="sr-only"> en CoolStuffInc (abre en una pestaña nueva)</span></a>
 								<span class="mt-1 block font-normal text-stone-400">{item.cardCode} · {item.rarity} · {item.condition}</span>
 							</th>
 							<td data-label="Solicitada" class="px-3 py-3 text-right text-stone-300">{item.requestedQuantity}</td>
@@ -295,6 +354,11 @@
 			</table>
 		</div>
 	</section>
+	{#if order.status === 'paid' && order.purchasingFinalizedAt}
+		<section class="detail-section"><h2>Preparar entrega final</h2><form class="semantic-form compact-form" on:submit|preventDefault={createFulfillment}><label><span class="label">Empresa nacional</span><select class="field" bind:value={carrier}><option value="zoom">Zoom</option><option value="mrw">MRW</option></select></label><label><span class="label">Número de guía</span><input class="field" bind:value={trackingNumber} /></label><label><span class="label">Costo de entrega</span><input class="field" type="number" min="0" step="0.01" bind:value={deliveryCost} /></label><button class="button" disabled={saving}>Crear entrega</button></form></section>
+	{/if}
+	<OrderHistoryPanel orderId={order.id} />
+	{#if order.status === 'paid'}<FulfillmentTools />{/if}
 	<ConfirmDialog
 		open={pendingTransition !== null}
 		title={pendingTransition === 'accept' ? 'Aceptar orden' : 'Rechazar orden'}

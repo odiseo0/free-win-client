@@ -4,6 +4,46 @@
  */
 
 export interface paths {
+    "/health/live": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Comprobar que el proceso HTTP responde
+         * @description No consulta PostgreSQL ni el caché configurado.
+         */
+        get: operations["getHealthLiveness"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/health/ready": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Comprobar las dependencias necesarias para atender solicitudes
+         * @description Comprueba PostgreSQL y el caché sin exponer datos de conexión.
+         */
+        get: operations["getHealthReadiness"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/users/": {
         parameters: {
             query?: never;
@@ -648,6 +688,298 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/order-requests/{order_request_id}/mark-paid": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirmar el pago de una Orden
+         * @description Marca una Orden aceptada como pagada mediante una acción administrativa.
+         */
+        post: operations["markOrderRequestPaid"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/order-requests/{order_request_id}/revert-payment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Revertir el pago de una Orden
+         * @description Revierte el pago mientras no exista ninguna cantidad comprada.
+         */
+        post: operations["revertOrderRequestPayment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/order-requests/{order_request_id}/purchasing/finalize": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cerrar la compra de una Orden
+         * @description Indica que no se comprarán más cantidades de la Orden.
+         */
+        post: operations["finalizeOrderRequestPurchasing"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/order-requests/{order_request_id}/purchasing/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reabrir la compra de una Orden
+         * @description Permite nuevas asignaciones antes de crear la entrega final.
+         */
+        post: operations["reopenOrderRequestPurchasing"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/order-requests/{order_request_id}/delivery-preference": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Elegir retiro o envío nacional
+         * @description Guarda la modalidad final y valida que la dirección pertenezca al usuario.
+         */
+        put: operations["setOrderRequestDeliveryPreference"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/order-requests/{order_request_id}/tracking": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar el seguimiento de una Orden
+         * @description Devuelve pago, cantidades, envíos relacionados y entrega final.
+         */
+        get: operations["getOrderRequestTracking"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/deliveries/international-shipments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar envíos internacionales
+         * @description Devuelve los envíos administrativos de un Pedido.
+         */
+        get: operations["listInternationalShipments"];
+        put?: never;
+        /**
+         * Crear un envío internacional
+         * @description Agrupa cantidades de una o varias Órdenes pagadas del mismo Pedido.
+         */
+        post: operations["createInternationalShipment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/deliveries/international-shipments/{shipment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar un envío internacional
+         * @description Muestra cantidades y eventos sin exponer otras Órdenes al usuario.
+         */
+        get: operations["getInternationalShipment"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Actualizar un envío internacional
+         * @description Cambia el nombre y las referencias administrativas del envío.
+         */
+        patch: operations["updateInternationalShipment"];
+        trace?: never;
+    };
+    "/deliveries/international-shipments/{shipment_id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Registrar una etapa internacional
+         * @description Añade un evento inmutable y permite correcciones con motivo.
+         */
+        post: operations["addInternationalShipmentEvent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/deliveries/order-requests/{order_request_id}/fulfillments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Crear la entrega final de una Orden
+         * @description Prepara el retiro o crea un envío nacional con datos copiados.
+         */
+        post: operations["createOrderRequestFulfillment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/deliveries/fulfillments/{fulfillment_id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Registrar una etapa de entrega final
+         * @description Actualiza un retiro o envío nacional sin borrar su historial.
+         */
+        post: operations["addFulfillmentEvent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/deliveries/national-shipments/{shipment_id}/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Solicitar la actualización de una guía
+         * @description Marca la guía para que el proceso periódico la consulte pronto.
+         */
+        post: operations["requestNationalShipmentRefresh"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/delivery-stages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar etapas de entrega
+         * @description Devuelve el catálogo ordenado y permite filtrar por ámbito.
+         */
+        get: operations["listDeliveryStages"];
+        put?: never;
+        /**
+         * Crear una etapa de entrega
+         * @description Añade una clave estable al catálogo logístico.
+         */
+        post: operations["createDeliveryStage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/delivery-stages/{stage_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Actualizar una etapa de entrega
+         * @description Cambia nombre, orden, tipo o disponibilidad sin cambiar su clave.
+         */
+        patch: operations["updateDeliveryStage"];
+        trace?: never;
+    };
     "/": {
         parameters: {
             query?: never;
@@ -669,6 +1001,131 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** DeliveryEventCreate */
+        DeliveryEventCreate: {
+            /** Stagekey */
+            stageKey: string;
+            /** Occurredat */
+            occurredAt?: string | null;
+            /** Note */
+            note?: string | null;
+            /** Correctionofeventid */
+            correctionOfEventId?: number | null;
+            /** Correctionreason */
+            correctionReason?: string | null;
+        };
+        /** DeliveryEventResponse */
+        DeliveryEventResponse: {
+            /** Id */
+            id: number;
+            /** Stageid */
+            stageId: number | null;
+            /** Stagekey */
+            stageKey: string | null;
+            /** Stagename */
+            stageName: string | null;
+            source: components["schemas"]["DeliveryEventSource"];
+            /** Actoruserid */
+            actorUserId: number | null;
+            /**
+             * Occurredat
+             * Format: date-time
+             */
+            occurredAt: string;
+            /**
+             * Recordedat
+             * Format: date-time
+             */
+            recordedAt: string;
+            /** Note */
+            note: string | null;
+            /** Rawstatus */
+            rawStatus: string | null;
+            /** Correctionofeventid */
+            correctionOfEventId: number | null;
+            /** Correctionreason */
+            correctionReason: string | null;
+        };
+        /**
+         * DeliveryEventSource
+         * @enum {string}
+         */
+        DeliveryEventSource: "admin" | "system" | "carrier";
+        /**
+         * DeliveryMethod
+         * @enum {string}
+         */
+        DeliveryMethod: "pickup" | "national_shipping";
+        /** DeliveryPreferenceResponse */
+        DeliveryPreferenceResponse: {
+            method: components["schemas"]["DeliveryMethod"];
+            /** Useraddressid */
+            userAddressId: number | null;
+            /** Dateupdated */
+            dateUpdated: string | null;
+        };
+        /** DeliveryPreferenceUpdate */
+        DeliveryPreferenceUpdate: {
+            method: components["schemas"]["DeliveryMethod"];
+            /** Useraddressid */
+            userAddressId?: number | null;
+        };
+        /** DeliveryStageCreate */
+        DeliveryStageCreate: {
+            scope: components["schemas"]["DeliveryStageScope"];
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /** Position */
+            position: number;
+            /** @default progress */
+            kind: components["schemas"]["DeliveryStageKind"];
+            /**
+             * Isterminal
+             * @default false
+             */
+            isTerminal: boolean;
+        };
+        /**
+         * DeliveryStageKind
+         * @enum {string}
+         */
+        DeliveryStageKind: "progress" | "exception";
+        /** DeliveryStageResponse */
+        DeliveryStageResponse: {
+            /** Id */
+            id: number;
+            scope: components["schemas"]["DeliveryStageScope"];
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /** Position */
+            position: number;
+            kind: components["schemas"]["DeliveryStageKind"];
+            /** Isterminal */
+            isTerminal: boolean;
+            /** Isactive */
+            isActive: boolean;
+        };
+        /**
+         * DeliveryStageScope
+         * @enum {string}
+         */
+        DeliveryStageScope: "international" | "national" | "pickup";
+        /** DeliveryStageUpdate */
+        DeliveryStageUpdate: {
+            /** Name */
+            name?: string | null;
+            /** Position */
+            position?: number | null;
+            kind?: components["schemas"]["DeliveryStageKind"] | null;
+            /** Isterminal */
+            isTerminal?: boolean | null;
+            /** Isactive */
+            isActive?: boolean | null;
+        };
         /** ErrorResponse */
         ErrorResponse: {
             /**
@@ -678,11 +1135,138 @@ export interface components {
              */
             detail: string;
         };
+        /** FulfillmentCreate */
+        FulfillmentCreate: {
+            carrier?: components["schemas"]["NationalCarrier"] | null;
+            /** Trackingnumber */
+            trackingNumber?: string | null;
+            /** Shippingcost */
+            shippingCost?: number | string | null;
+            /**
+             * Currency
+             * @default USD
+             */
+            currency: string;
+            costPayer?: components["schemas"]["ShippingCostPayer"] | null;
+        };
+        /** FulfillmentResponse */
+        FulfillmentResponse: {
+            /** Id */
+            id: number;
+            /** Orderrequestid */
+            orderRequestId: number;
+            method: components["schemas"]["DeliveryMethod"];
+            currentStage: components["schemas"]["DeliveryStageResponse"];
+            carrier: components["schemas"]["NationalCarrier"] | null;
+            /** Trackingnumber */
+            trackingNumber: string | null;
+            /** Shippingcost */
+            shippingCost: string | null;
+            /** Currency */
+            currency: string | null;
+            costPayer: components["schemas"]["ShippingCostPayer"] | null;
+            /** Recipientsnapshot */
+            recipientSnapshot: {
+                [key: string]: unknown;
+            } | null;
+            /** Addresssnapshot */
+            addressSnapshot: {
+                [key: string]: unknown;
+            } | null;
+            /** Lastcheckedat */
+            lastCheckedAt: string | null;
+            /** Nextcheckat */
+            nextCheckAt: string | null;
+            /** Hastrackingerror */
+            hasTrackingError: boolean;
+            /** Needsreview */
+            needsReview: boolean;
+            /** Events */
+            events: components["schemas"]["DeliveryEventResponse"][];
+            /**
+             * Dateadded
+             * Format: date-time
+             */
+            dateAdded: string;
+            /** Dateupdated */
+            dateUpdated: string | null;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** HealthResponse */
+        HealthResponse: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "ready" | "unavailable";
+        };
+        /** InternationalShipmentCreate */
+        InternationalShipmentCreate: {
+            /** Orderperiodid */
+            orderPeriodId: number;
+            /** Name */
+            name: string;
+            /** Reference */
+            reference?: string | null;
+            /** Externalreferences */
+            externalReferences?: string[];
+            /** Allocations */
+            allocations: components["schemas"]["ShipmentOrderAllocation"][];
+        };
+        /** InternationalShipmentResponse */
+        InternationalShipmentResponse: {
+            /** Id */
+            id: number;
+            /** Orderperiodid */
+            orderPeriodId: number;
+            /** Name */
+            name: string;
+            /** Reference */
+            reference: string | null;
+            /** Externalreferences */
+            externalReferences: string[];
+            currentStage: components["schemas"]["DeliveryStageResponse"];
+            /** Allocations */
+            allocations: components["schemas"]["ShipmentAllocationResponse"][];
+            /** Events */
+            events: components["schemas"]["DeliveryEventResponse"][];
+            /**
+             * Dateadded
+             * Format: date-time
+             */
+            dateAdded: string;
+            /** Dateupdated */
+            dateUpdated: string | null;
+        };
+        /** InternationalShipmentUpdate */
+        InternationalShipmentUpdate: {
+            /** Name */
+            name?: string | null;
+            /** Reference */
+            reference?: string | null;
+            /** Externalreferences */
+            externalReferences?: string[] | null;
+        };
+        /** InternationalTrackingSummary */
+        InternationalTrackingSummary: {
+            /** Stagekey */
+            stageKey: string;
+            /** Stagename */
+            stageName: string;
+            /** Ispartial */
+            isPartial: boolean;
+            /** Purchasingfinalized */
+            purchasingFinalized: boolean;
+        };
+        /**
+         * NationalCarrier
+         * @enum {string}
+         */
+        NationalCarrier: "zoom" | "mrw";
         /** OrderPeriodCreate */
         OrderPeriodCreate: {
             /**
@@ -1149,6 +1733,21 @@ export interface components {
              */
             cancelledByUserId?: number | null;
             /**
+             * Paidat
+             * @description Fecha de confirmación manual del pago.
+             */
+            paidAt?: string | null;
+            /**
+             * Paidbyuserid
+             * @description Administrador que confirmó el pago.
+             */
+            paidByUserId?: number | null;
+            /**
+             * Purchasingfinalizedat
+             * @description Fecha en que se cerró la compra de la Orden.
+             */
+            purchasingFinalizedAt?: string | null;
+            /**
              * Items
              * @description Ítems activos y retirados que preservan sus snapshots.
              */
@@ -1174,7 +1773,7 @@ export interface components {
          * OrderRequestStatus
          * @enum {string}
          */
-        OrderRequestStatus: "submitted" | "in_review" | "accepted" | "rejected" | "cancelled";
+        OrderRequestStatus: "submitted" | "in_review" | "accepted" | "paid" | "rejected" | "cancelled";
         /** OrderRequestUpdate */
         OrderRequestUpdate: {
             /**
@@ -1184,11 +1783,27 @@ export interface components {
              */
             note?: string | null;
         };
+        /** OrderTrackingResponse */
+        OrderTrackingResponse: {
+            /** Orderrequestid */
+            orderRequestId: number;
+            /** Ispaid */
+            isPaid: boolean;
+            /** Paidat */
+            paidAt: string | null;
+            /** Items */
+            items: components["schemas"]["TrackingItemResponse"][];
+            internationalSummary: components["schemas"]["InternationalTrackingSummary"];
+            /** Internationalshipments */
+            internationalShipments: components["schemas"]["InternationalShipmentResponse"][];
+            preference: components["schemas"]["DeliveryPreferenceResponse"] | null;
+            fulfillment: components["schemas"]["FulfillmentResponse"] | null;
+        };
         /**
          * PermissionCode
          * @enum {string}
          */
-        PermissionCode: "users.read.any" | "users.read.self" | "users.update.any" | "users.update.self" | "users.delete.any" | "users.assign_role" | "addresses.read.any" | "addresses.read.self" | "addresses.create.any" | "addresses.create.self" | "addresses.update.any" | "addresses.update.self" | "addresses.delete.any" | "addresses.delete.self" | "roles.read" | "roles.create" | "roles.update" | "roles.delete" | "roles.assign_permissions" | "permissions.read" | "order_periods.read" | "order_periods.read_drafts" | "order_periods.create" | "order_periods.update" | "order_periods.close" | "order_requests.read.self" | "order_requests.read.any" | "order_requests.create.self" | "order_requests.update.self" | "order_requests.update.any" | "order_requests.review";
+        PermissionCode: "users.read.any" | "users.read.self" | "users.update.any" | "users.update.self" | "users.delete.any" | "users.assign_role" | "addresses.read.any" | "addresses.read.self" | "addresses.create.any" | "addresses.create.self" | "addresses.update.any" | "addresses.update.self" | "addresses.delete.any" | "addresses.delete.self" | "roles.read" | "roles.create" | "roles.update" | "roles.delete" | "roles.assign_permissions" | "permissions.read" | "order_periods.read" | "order_periods.read_drafts" | "order_periods.create" | "order_periods.update" | "order_periods.close" | "order_requests.read.self" | "order_requests.read.any" | "order_requests.create.self" | "order_requests.update.self" | "order_requests.update.any" | "order_requests.review" | "deliveries.read.self" | "deliveries.read.any" | "deliveries.select.self" | "deliveries.manage_payments" | "deliveries.manage" | "deliveries.refresh.self" | "deliveries.refresh.any" | "delivery_stages.manage";
         /** PermissionResponse */
         PermissionResponse: {
             /**
@@ -1268,6 +1883,45 @@ export interface components {
              * @description Nueva explicación del rol.
              */
             description?: string | null;
+        };
+        /** ShipmentAllocationResponse */
+        ShipmentAllocationResponse: {
+            /** Orderrequestid */
+            orderRequestId: number;
+            /** Orderrequestitemid */
+            orderRequestItemId: number;
+            /** Quantity */
+            quantity: number;
+        };
+        /** ShipmentItemQuantity */
+        ShipmentItemQuantity: {
+            /** Orderrequestitemid */
+            orderRequestItemId: number;
+            /** Quantity */
+            quantity: number;
+        };
+        /** ShipmentOrderAllocation */
+        ShipmentOrderAllocation: {
+            /** Orderrequestid */
+            orderRequestId: number;
+            /** Items */
+            items?: components["schemas"]["ShipmentItemQuantity"][] | null;
+        };
+        /**
+         * ShippingCostPayer
+         * @enum {string}
+         */
+        ShippingCostPayer: "free_win" | "recipient";
+        /** TrackingItemResponse */
+        TrackingItemResponse: {
+            /** Orderrequestitemid */
+            orderRequestItemId: number;
+            /** Agreedquantity */
+            agreedQuantity: number;
+            /** Purchasedquantity */
+            purchasedQuantity: number;
+            /** Pendingquantity */
+            pendingQuantity: number;
         };
         /** UserAddressCreate */
         UserAddressCreate: {
@@ -1433,15 +2087,10 @@ export interface components {
              */
             externalId?: string | null;
             /**
-             * Firstname
-             * @description Nombre del usuario.
+             * Name
+             * @description Nombre completo del usuario.
              */
-            firstName: string;
-            /**
-             * Lastname
-             * @description Apellido del usuario.
-             */
-            lastName: string;
+            name: string;
             /**
              * Alias
              * @description Nombre público opcional del usuario.
@@ -1488,15 +2137,10 @@ export interface components {
              */
             externalId?: string | null;
             /**
-             * Firstname
-             * @description Nombre del usuario.
+             * Name
+             * @description Nombre completo del usuario.
              */
-            firstName?: string | null;
-            /**
-             * Lastname
-             * @description Apellido del usuario.
-             */
-            lastName?: string | null;
+            name?: string | null;
             /**
              * Alias
              * @description Nombre público opcional del usuario.
@@ -1580,15 +2224,10 @@ export interface components {
              */
             externalId?: string | null;
             /**
-             * Firstname
-             * @description Nombre del usuario.
+             * Name
+             * @description Nombre completo del usuario.
              */
-            firstName?: string | null;
-            /**
-             * Lastname
-             * @description Apellido del usuario.
-             */
-            lastName?: string | null;
+            name?: string | null;
             /**
              * Alias
              * @description Nombre público opcional del usuario.
@@ -1662,6 +2301,55 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getHealthLiveness: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+        };
+    };
+    getHealthReadiness: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+            /** @description PostgreSQL o el caché configurado no están disponibles. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+        };
+    };
     listUsers: {
         parameters: {
             query?: {
@@ -4319,6 +5007,561 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    markOrderRequestPaid: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                order_request_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderRequestResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revertOrderRequestPayment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                order_request_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderRequestResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    finalizeOrderRequestPurchasing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                order_request_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderTrackingResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reopenOrderRequestPurchasing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                order_request_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderTrackingResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    setOrderRequestDeliveryPreference: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                order_request_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeliveryPreferenceUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryPreferenceResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    getOrderRequestTracking: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                order_request_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderTrackingResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listInternationalShipments: {
+        parameters: {
+            query: {
+                orderPeriodId: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternationalShipmentResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    createInternationalShipment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InternationalShipmentCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternationalShipmentResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    getInternationalShipment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shipment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternationalShipmentResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    updateInternationalShipment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shipment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InternationalShipmentUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternationalShipmentResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    addInternationalShipmentEvent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shipment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeliveryEventCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternationalShipmentResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    createOrderRequestFulfillment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                order_request_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FulfillmentCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FulfillmentResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    addFulfillmentEvent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                fulfillment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeliveryEventCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FulfillmentResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    requestNationalShipmentRefresh: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shipment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listDeliveryStages: {
+        parameters: {
+            query?: {
+                scope?: components["schemas"]["DeliveryStageScope"] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryStageResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    createDeliveryStage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeliveryStageCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryStageResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    updateDeliveryStage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                stage_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeliveryStageUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryStageResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

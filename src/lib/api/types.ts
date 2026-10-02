@@ -4,9 +4,21 @@ import type { components as SearchComponents } from './search.generated';
 type BackendSchema = BackendComponents['schemas'];
 type SearchSchema = SearchComponents['schemas'];
 
-// Use the corrected backend contract shape while the local generated contract is refreshed.
-export interface UserCreate { name: string; email: string; password: string; }
+export type UserCreate = BackendSchema['UserCreate'];
 export type User = BackendSchema['UserResponse'];
+export type UserUpdate = BackendSchema['UserUpdate'];
+export type UserList = BackendSchema['UserListResponse'];
+export type UserRoleAssignment = BackendSchema['UserRoleAssignment'];
+export type UserAddress = BackendSchema['UserAddressResponse'];
+export type UserAddressCreate = BackendSchema['UserAddressCreate'];
+export type UserAddressUpdate = BackendSchema['UserAddressUpdate'];
+export type UserAddressList = BackendSchema['UserAddressListResponse'];
+export type Role = BackendSchema['RoleResponse'];
+export type RoleCreate = BackendSchema['RoleCreate'];
+export type RoleUpdate = BackendSchema['RoleUpdate'];
+export type RolePermissionsUpdate = BackendSchema['RolePermissionsUpdate'];
+export type Permission = BackendSchema['PermissionResponse'];
+export type PermissionCode = BackendSchema['PermissionCode'];
 
 export type CardListing = SearchSchema['CardListingResponse'];
 export type CardListingList = SearchSchema['CardListingListResponse'];
@@ -31,3 +43,15 @@ export type OrderRequestHistory = BackendSchema['OrderRequestHistoryResponse'];
 export type OrderRequestStatus = BackendSchema['OrderRequestStatus'];
 export type OrderPeriodList = BackendSchema['OrderPeriodListResponse'];
 export type OrderRequestList = BackendSchema['OrderRequestListResponse'];
+export type OrderTracking = BackendSchema['OrderTrackingResponse'];
+export type DeliveryPreferenceUpdate = BackendSchema['DeliveryPreferenceUpdate'];
+export type InternationalShipment = BackendSchema['InternationalShipmentResponse'];
+export type InternationalShipmentCreate = BackendSchema['InternationalShipmentCreate'];
+export type InternationalShipmentUpdate = BackendSchema['InternationalShipmentUpdate'];
+export type DeliveryEventCreate = BackendSchema['DeliveryEventCreate'];
+export type FulfillmentCreate = BackendSchema['FulfillmentCreate'];
+export type Fulfillment = BackendSchema['FulfillmentResponse'];
+export type DeliveryStage = BackendSchema['DeliveryStageResponse'];
+export type DeliveryStageCreate = BackendSchema['DeliveryStageCreate'];
+export type DeliveryStageUpdate = BackendSchema['DeliveryStageUpdate'];
+export type DeliveryStageScope = BackendSchema['DeliveryStageScope'];

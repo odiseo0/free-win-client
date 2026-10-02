@@ -1,0 +1,4 @@
+---
+import AppShell from '../../../components/layout/AppShell.astro'; import AdminRoles from '../../../components/admin/AdminRoles.svelte'; import '../../../styles/global.css';
+---
+<AppShell title="Roles y permisos | Administración | Free Win" layout="wide" area="admin"><header class="heading-actions"><div><p class="route-label">ADMINISTRACIÓN / ACCESO</p><h1 class="page-heading">Roles y permisos</h1><p class="page-intro">Define qué acciones puede usar cada rol.</p></div><a class="button" href="/admin/roles/new">Crear rol</a></header><AdminRoles client:load /></AppShell>

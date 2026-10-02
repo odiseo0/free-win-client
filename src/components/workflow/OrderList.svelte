@@ -13,8 +13,8 @@
 	let loading = true;
 	let error = '';
 	let periodFilter = initialOrderPeriodId?.toString() ?? '';
-	$: activeOrders = orders.filter((order) => order.status === 'submitted' || order.status === 'in_review');
-	$: pastOrders = orders.filter((order) => order.status === 'accepted' || order.status === 'rejected' || order.status === 'cancelled');
+	$: activeOrders = orders.filter((order) => order.status === 'submitted' || order.status === 'in_review' || order.status === 'accepted' || order.status === 'paid');
+	$: pastOrders = orders.filter((order) => order.status === 'rejected' || order.status === 'cancelled');
 
 	async function load() {
 		loading = true;

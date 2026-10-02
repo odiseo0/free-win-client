@@ -1,0 +1,7 @@
+---
+import AppShell from '../../../components/layout/AppShell.astro';
+import AdminUserDetail from '../../../components/admin/AdminUserDetail.svelte';
+import '../../../styles/global.css';
+const id = Number(Astro.params.id); if (!Number.isInteger(id) || id <= 0) return Astro.redirect('/admin/users');
+---
+<AppShell title={`Usuario #${id} | Administración | Free Win`} area="admin"><a class="parent-link" href="/admin/users">← Volver a Usuarios</a><header><p class="route-label">ADMINISTRACIÓN / USUARIO #{id}</p><h1 class="page-heading">Perfil de usuario</h1></header><AdminUserDetail client:load {id} /></AppShell>

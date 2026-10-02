@@ -1,16 +1,19 @@
 ---
 import AppNavigation from './AppNavigation.svelte';
+import SessionGate from './SessionGate.svelte';
 
 interface Props {
 	title: string;
 	description?: string;
 	layout?: 'standard' | 'wide' | 'composer';
+	area?: 'user' | 'admin';
 }
 
 const {
 	title,
 	description = 'Free Win coordina Pedidos comunitarios de cartas Yu-Gi-Oh!.',
 	layout = 'standard',
+	area = 'user',
 } = Astro.props;
 ---
 
@@ -30,9 +33,10 @@ const {
 	<body>
 		<a class="skip-link" href="#contenido">Ir al contenido</a>
 		<div class="app-shell">
-			<AppNavigation client:load path={Astro.url.pathname} />
+			<AppNavigation client:load path={Astro.url.pathname} {area} />
 			<div class="app-stage">
 				<main id="contenido" class:list={['app-main', `app-main--${layout}`]}>
+					<SessionGate client:load requiredPersona={area === 'admin' ? 'admin' : 'user'} path={Astro.url.pathname} />
 					<slot />
 				</main>
 				<footer class:list={['task-footer', `task-footer--${layout}`]}>

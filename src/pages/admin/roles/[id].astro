@@ -1,0 +1,4 @@
+---
+import AppShell from '../../../components/layout/AppShell.astro'; import AdminRoleForm from '../../../components/admin/AdminRoleForm.svelte'; import '../../../styles/global.css'; const id=Number(Astro.params.id); if(!Number.isInteger(id)||id<=0)return Astro.redirect('/admin/roles');
+---
+<AppShell title={`Rol #${id} | Administración | Free Win`} area="admin"><a class="parent-link" href="/admin/roles">← Volver a Roles</a><header><p class="route-label">ADMINISTRACIÓN / ROL #{id}</p><h1 class="page-heading">Editar rol</h1></header><AdminRoleForm client:load {id} /></AppShell>

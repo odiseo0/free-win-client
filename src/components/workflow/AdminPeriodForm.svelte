@@ -88,6 +88,9 @@
 				<a class="button-secondary" href={`/admin/orders?orderPeriodId=${period.id}`}>
 					Ver órdenes del Pedido
 				</a>
+				<a class="button-secondary" href={`/admin/shipments?orderPeriodId=${period.id}`}>
+					Ver envíos del Pedido
+				</a>
 			</div>
 		</div>
 	{/if}

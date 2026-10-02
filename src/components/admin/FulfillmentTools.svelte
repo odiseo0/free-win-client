@@ -1,0 +1,11 @@
+<script lang="ts">
+	import { onMount } from 'svelte';
+	import { deliveryStagesApi, fulfillmentApi } from '../../lib/api/deliveries';
+	import { getApiErrorMessage } from '../../lib/api/client';
+	import type { DeliveryStage } from '../../lib/api/types';
+	let fulfillmentId = '', stageKey = '', note = '', stages: DeliveryStage[] = [], error = '', notice = '', busy = false;
+	onMount(async () => { try { stages = [...await deliveryStagesApi.list('national'), ...await deliveryStagesApi.list('pickup')]; stageKey = stages[0]?.key ?? ''; } catch (caught) { error = getApiErrorMessage(caught); } });
+	async function addEvent() { busy = true; error = ''; try { await fulfillmentApi.addEvent(Number(fulfillmentId), { stageKey, note: note || null }); notice = 'La etapa de entrega se registró.'; note = ''; } catch (caught) { error = getApiErrorMessage(caught); } finally { busy = false; } }
+	async function refresh() { busy = true; error = ''; try { await fulfillmentApi.refresh(Number(fulfillmentId)); notice = 'La guía se marcó para una consulta próxima.'; } catch (caught) { error = getApiErrorMessage(caught); } finally { busy = false; } }
+</script>
+<section class="detail-section"><h2>Actualizar una entrega existente</h2><p class="field-hint">Usa el identificador de la entrega que devolvió el servidor al crearla.</p><form class="semantic-form compact-form" on:submit|preventDefault={addEvent}><label><span class="label">Identificador de entrega</span><input class="field" type="number" min="1" required bind:value={fulfillmentId} /></label><label><span class="label">Etapa</span><select class="field" required bind:value={stageKey}>{#each stages as stage}<option value={stage.key}>{stage.name} · {stage.scope}</option>{/each}</select></label><label><span class="label">Nota</span><textarea class="field" rows="2" bind:value={note}></textarea></label><div class="action-row"><button class="button" type="submit" disabled={busy}>Registrar etapa</button><button class="button-secondary" type="button" disabled={busy || !fulfillmentId} on:click={refresh}>Actualizar guía nacional</button></div>{#if error}<p class="error-text" role="alert">{error}</p>{/if}{#if notice}<p role="status">{notice}</p>{/if}</form></section>

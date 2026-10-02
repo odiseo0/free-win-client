@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { readMockBlockedData, writeMockBlockedData } from '../../lib/mockData';
 	type Profile = { name: string; alias: string; email: string; phoneCode: string; phoneNumber: string; idNumber: string };
 	type Address = { id: number; name: string; state: string; city: string; address: string; address2: string; zipCode: string };
 	const emptyAddress = (): Address => ({ id: 0, name: '', state: '', city: '', address: '', address2: '', zipCode: '' });
@@ -12,6 +14,26 @@
 	let nextAddressId = 2;
 	let notice = '';
 
+	function persist() {
+		const data = readMockBlockedData();
+		writeMockBlockedData({
+			...data,
+			profile: { ...data.profile, ...profile },
+			addresses: addresses.map((item) => ({ ...item, userId: 1 })),
+		});
+	}
+
+	onMount(() => {
+		const data = readMockBlockedData();
+		profile = {
+			name: data.profile.name ?? '', alias: data.profile.alias ?? '', email: data.profile.email ?? '',
+			phoneCode: data.profile.phoneCode ?? '', phoneNumber: data.profile.phoneNumber ?? '', idNumber: data.profile.idNumber ?? '',
+		};
+		profileDraft = { ...profile };
+		addresses = data.addresses.map((item) => ({ id: item.id, name: item.name ?? '', state: item.state ?? '', city: item.city ?? '', address: item.address ?? '', address2: item.address2 ?? '', zipCode: item.zipCode ?? '' }));
+		nextAddressId = Math.max(0, ...addresses.map((item) => item.id)) + 1;
+	});
+
 	function startProfileEdit() {
 		profileDraft = { ...profile };
 		editingProfile = true;
@@ -21,7 +43,8 @@
 	function saveProfile() {
 		profile = Object.fromEntries(Object.entries(profileDraft).map(([key, value]) => [key, value.trim()])) as Profile;
 		editingProfile = false;
-		notice = 'Los datos de ejemplo se actualizaron en esta página.';
+		persist();
+		notice = 'Los datos de prueba se guardaron en este navegador.';
 	}
 
 	function startAddressAdd() {
@@ -44,9 +67,20 @@
 		};
 		addresses = addressMode === 'add' ? [...addresses, saved] : addresses.map((address) => address.id === saved.id ? saved : address);
 		addressMode = null;
-		notice = 'La dirección de ejemplo se actualizó en esta página.';
+		persist();
+		notice = 'La dirección de prueba se guardó en este navegador.';
+	}
+
+	function deleteAddress(id: number) {
+		if (!window.confirm('¿Eliminar esta dirección de prueba?')) return;
+		addresses = addresses.filter((address) => address.id !== id);
+		persist();
+		notice = 'La dirección de prueba se eliminó.';
 	}
 </script>
+
+<aside class="demo-note" aria-label="Datos de prueba"><p class="route-label">DATOS DE PRUEBA</p><p>El backend de usuarios y direcciones aún falla. Estos cambios solo se guardan en este navegador.</p></aside>
+{#if notice}<p class="state-box" role="status">{notice}</p>{/if}
 
 <section class="account-section account-section--profile" aria-labelledby="profile-title">
 	<div class="section-heading">
@@ -84,7 +118,7 @@
 	<div class="address-list">
 		{#each addresses as address (address.id)}
 			<article class="address-card">
-				<div class="address-card-heading"><h3>{address.name}</h3>{#if addressMode === null}<button class="text-action" type="button" on:click={() => startAddressEdit(address)}>Editar dirección</button>{/if}</div>
+				<div class="address-card-heading"><h3>{address.name}</h3>{#if addressMode === null}<div class="address-actions"><button class="text-action" type="button" on:click={() => startAddressEdit(address)}>Editar</button><button class="text-action error-text" type="button" on:click={() => deleteAddress(address.id)}>Eliminar</button></div>{/if}</div>
 				<p>{address.address}{#if address.address2}<br />{address.address2}{/if}</p>
 				<p>{address.city}, {address.state} · {address.zipCode}</p>
 			</article>
@@ -130,6 +164,7 @@
 	.address-card p{margin:.75rem 0 0}
 	.address-card p:last-child{color:var(--ink-soft)}
 	.address-card .text-action{border:0;background:transparent;padding:.25rem;color:var(--ink);font-size:.875rem;text-decoration:underline;cursor:pointer}
+	.address-actions{display:flex;gap:.75rem}
 	.address-form{border-top:1px solid var(--ink);padding-top:1.5rem}
 	@media(max-width:42rem){.section-heading{align-items:start;flex-direction:column}.details-grid,.form-grid{grid-template-columns:1fr}.full-row{grid-column:auto}.address-card-heading{flex-wrap:wrap}}
 </style>

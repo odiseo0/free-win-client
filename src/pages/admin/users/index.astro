@@ -1,0 +1,6 @@
+---
+import AppShell from '../../../components/layout/AppShell.astro';
+import AdminUsers from '../../../components/admin/AdminUsers.svelte';
+import '../../../styles/global.css';
+---
+<AppShell title="Usuarios | Administración | Free Win" layout="wide" area="admin"><header><p class="route-label">ADMINISTRACIÓN / PERSONAS</p><h1 class="page-heading">Usuarios</h1><p class="page-intro">Consulta perfiles, direcciones y acceso administrativo.</p></header><AdminUsers client:load /></AppShell>

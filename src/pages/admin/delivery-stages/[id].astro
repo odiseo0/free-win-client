@@ -1,0 +1,4 @@
+---
+import AppShell from '../../../components/layout/AppShell.astro'; import DeliveryStagesAdmin from '../../../components/admin/DeliveryStagesAdmin.svelte'; import '../../../styles/global.css'; const id=Number(Astro.params.id); if(!Number.isInteger(id)||id<=0)return Astro.redirect('/admin/delivery-stages');
+---
+<AppShell title={`Etapa #${id} | Administración | Free Win`} area="admin"><a class="parent-link" href="/admin/delivery-stages">← Volver a Etapas</a><header><p class="route-label">ADMINISTRACIÓN / ETAPA #{id}</p><h1 class="page-heading">Editar etapa</h1></header><DeliveryStagesAdmin client:load {id} mode="form" /></AppShell>

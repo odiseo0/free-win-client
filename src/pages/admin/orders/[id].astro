@@ -7,7 +7,7 @@ const id = Number(Astro.params.id);
 if (!Number.isInteger(id) || id <= 0) return Astro.redirect('/admin/orders');
 ---
 
-<AppShell title={`Revisar orden #${id} | Free Win`} layout="wide">
+<AppShell title={`Revisar orden #${id} | Free Win`} layout="wide" area="admin">
 	<a class="parent-link" href="/admin/orders">
 		← Volver a órdenes
 	</a>

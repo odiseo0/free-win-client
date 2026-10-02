@@ -36,7 +36,7 @@ describe('current order cache', () => {
 
 	it('rejects a stored status that is no longer active', () => {
 		const values = useStorage();
-		values.set('free-win:current-order:v1', JSON.stringify({ order: { id: 8, status: 'accepted' }, expiresAt: Date.now() + 10_000 }));
+		values.set('free-win:current-order:v1', JSON.stringify({ order: { id: 8, status: 'rejected' }, expiresAt: Date.now() + 10_000 }));
 		expect(readCurrentOrderCache()).toBeNull();
 	});
 });

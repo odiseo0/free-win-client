@@ -20,6 +20,7 @@ export const orderStatusLabels: Record<OrderRequestStatus, string> = {
 	submitted: 'Pendiente',
 	in_review: 'En revisión',
 	accepted: 'Aceptada',
+	paid: 'Pagada',
 	rejected: 'Rechazada',
 	cancelled: 'Cancelada',
 };
@@ -58,7 +59,7 @@ export function selectMostRecentActiveOrder(
 	orders: readonly OrderRequest[],
 ): OrderRequest | null {
 	const activeOrders = orders.filter(
-		(order) => order.status === 'submitted' || order.status === 'in_review',
+		(order) => order.status === 'submitted' || order.status === 'in_review' || order.status === 'accepted' || order.status === 'paid',
 	);
 
 	if (activeOrders.length === 0) return null;

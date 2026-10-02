@@ -1,0 +1,4 @@
+---
+import AppShell from '../../../components/layout/AppShell.astro'; import AdminShipments from '../../../components/admin/AdminShipments.svelte'; import '../../../styles/global.css'; const parsed=Number(Astro.url.searchParams.get('orderPeriodId')); const initialPeriodId=Number.isInteger(parsed)&&parsed>0?parsed:null;
+---
+<AppShell title="Envíos | Administración | Free Win" layout="wide" area="admin"><header><p class="route-label">ADMINISTRACIÓN / LOGÍSTICA</p><h1 class="page-heading">Envíos</h1><p class="page-intro">Agrupa las cantidades compradas y registra su avance.</p></header><AdminShipments client:load {initialPeriodId} /></AppShell>

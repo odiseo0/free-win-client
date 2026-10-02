@@ -7,7 +7,7 @@ const id = Number(Astro.params.id);
 if (!Number.isInteger(id) || id <= 0) return Astro.redirect('/admin/order-periods');
 ---
 
-<AppShell title={`Administrar Pedido #${id} | Free Win`}>
+<AppShell title={`Administrar Pedido #${id} | Free Win`} area="admin">
 	<a class="parent-link" href="/admin/order-periods">← Volver a Pedidos</a>
 	<header class="mb-8">
 		<p class="text-sm font-semibold uppercase tracking-widest text-amber-400">Organización</p>

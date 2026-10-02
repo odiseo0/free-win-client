@@ -1,0 +1,4 @@
+---
+import AppShell from '../../../components/layout/AppShell.astro'; import DeliveryStagesAdmin from '../../../components/admin/DeliveryStagesAdmin.svelte'; import '../../../styles/global.css';
+---
+<AppShell title="Etapas de entrega | Administración | Free Win" layout="wide" area="admin"><header class="heading-actions"><div><p class="route-label">ADMINISTRACIÓN / LOGÍSTICA</p><h1 class="page-heading">Etapas de entrega</h1><p class="page-intro">Ordena los estados visibles de cada tipo de traslado.</p></div><a class="button" href="/admin/delivery-stages/new">Crear etapa</a></header><DeliveryStagesAdmin client:load /></AppShell>
